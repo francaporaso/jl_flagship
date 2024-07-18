@@ -101,5 +101,5 @@ Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10.
 #tracname = "../FlagShip/tests/testcat_uniform.fits"
 lensname = "/mnt/simulations/MICE/voids_MICE.dat"
 tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
-radial_profile(RMIN, RMAX, dr, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, filename)
+radial_profile(RMIN, RMAX, dr, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
 
