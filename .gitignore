@@ -1,0 +1,10 @@
+# ignorando plots
+*.png
+*.pdf
+*.jpg
+*.jpeg
+
+# ignorando cats
+*.fits
+*.txt
+*.csv
