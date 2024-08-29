@@ -8,3 +8,6 @@
 *.fits
 *.txt
 *.csv
+
+# ignorando jupyters
+*.ipynb
