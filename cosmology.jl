@@ -1,9 +1,7 @@
 """
 Hubble parameter squared (E function)
 """
-function H2(z, H0, Om0, Ode0)
-    return H0^2 * (Om0*(1+z)^3 + Ode0)
-end
+H2(z, H0, Om0, Ode0) = H0^2 * (Om0*(1+z)^3 + Ode0)
 
 """
 critical density at redshift z
