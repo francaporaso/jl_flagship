@@ -4,7 +4,11 @@ using FITSIO
 using Statistics
 using Plots
 
+include("cosmology.jl")
 
+"""
+Loads the lenses catalog
+"""
 function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max; 
                       flag=2.0, lensname="/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat")
     ## L[1] = id
@@ -30,9 +34,9 @@ end
 
 """
 Dado un cto de centros (xv, yv, zv) con su correspondiente radio rv
-encuentra los trazadores alrededor del centro hasta (1+dr)RMAX*rv
+encuentra los trazadores alrededor del centro hasta (1+DR)RMAX*rv
 """
-function get_tracers(RMAX::Float64, dr::Float64,
+function get_tracers(RMAX::Float64, DR::Float64,
                     rv::Vector{Float64}, xv::Vector{Float64}, yv::Vector{Float64}, zv::Vector{Float64}; 
                     tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits")
 
@@ -47,12 +51,12 @@ function get_tracers(RMAX::Float64, dr::Float64,
     nvoids = length(rv)
     trac_lists = Vector{Matrix{Float64}}(undef, nvoids)
 
-    ### Máscara en una bola con centro (xv,yv,zv) y radio (1+dr)RMAX*rv
+    ### Máscara en una bola con centro (xv,yv,zv) y radio (1+DR)RMAX*rv
     for v in 1:nvoids
         distance = @views @. sqrt((tcat[:,4] - xv[v])^2 + (tcat[:,5] - yv[v])^2 + (tcat[:,6] - zv[v])^2)
-        mask = distance .<= ((1.0+dr)*RMAX*rv[v])
+        mask = distance .<= ((1.0+DR)*RMAX*rv[v])
 
-        tr = hcat(tcat[mask,:], distance[mask])
+        tr = hcat(tcat[mask,3:6], distance[mask])
         trac_lists[v] = tr[sortperm(tr[:,end]),:] ## ordena de menor a mayor distance
     end
 
@@ -63,70 +67,74 @@ end
 Calcula el perfil de 1 void dados los trazadores tcat al rededor de (xv,yv,zv)
 """
 function partial_profile(tcat::Matrix{Float64}, 
-                        RMIN, RMAX, dr,
+                        RMIN, RMAX, DR,
                         rv, xv, yv, zv)
     
     MeanDen   = 1.0
-    MeanNTrac = NTRACS/LBOX
-    NBINS = length(RMIN:dr:RMAX)
+
+    NBINS = length(RMIN:DR:RMAX)
     
-    RMIN *= rv
-    RMAX *= rv
-    dr   *= rv
+    rmin = rv*RMIN
+    rmax = rv*RMAX
+    dr   = rv*DR
 
     Delta = zeros(NBINS)
     # DeltaCum = zeros(NBINS)
     NTrac = zeros(NBINS)
 
-    for m in 1:size(tcat,1)
-        if (tcat[m,end] >= RMIN) && (tcat[m,end] <= RMAX)
-            ibin = ceil(Int, (tcat[m,end]-RMIN)/dr)
-            Delta[ibin] += 10.0 ^ tcat[m, 3]
-            NTrac[ibin] += 1.0
-        end
-    end
-
-    # for i in 1:NBINS
-    #     ### cuidado con esto... lo hace Polaco pero no estoy seguro por qué
-    #     if NTrac[i] < 3.0
-    #         Delta[i] = 0.0
-    #         NTrac[i] = 0.0
+    # for m in 1:size(tcat,1)
+    #     if (tcat[m,end] >= RMIN) && (tcat[m,end] <= RMAX)
+    #         ibin = ceil(Int, (tcat[m,end]-RMIN)/dr)
+    #         Delta[ibin] += 10.0 ^ tcat[m, 3]
+    #         NTrac[ibin] += 1.0
     #     end
     # end
 
-    DeltaCum = cumsum(Delta)
+    # # for i in 1:NBINS
+    # #     ### cuidado con esto... lo hace Polaco pero no estoy seguro por qué
+    # #     if NTrac[i] < 3.0
+    # #         Delta[i] = 0.0
+    # #         NTrac[i] = 0.0
+    # #     end
+    # # end
 
-    for k in 0:NBINS-1
-        Ri = k*dr + RMIN
-        Rm = (k+0.5)*dr + RMIN
-        Rs = (k+1.0)*dr + RMIN
+    # DeltaCum = cumsum(Delta)
 
-        volumen = (4.0/3.0)*pi*(Rs^3 - Ri^3)
-        Delta[k+1] = Delta[k+1]/volumen/MeanDen
-        #Delta[k] /= volumen
-        NTrac[k+1] = NTrac[k+1]/volumen/MeanNTrac 
+    # for k in 0:NBINS-1
+    #     Ri = k*dr + RMIN
+    #     Rm = (k+0.5)*dr + RMIN
+    #     Rs = (k+1.0)*dr + RMIN
 
-        volcum = (4.0/3.0)*pi*(Rs^3)
-        DeltaCum[k+1] = DeltaCum[k+1]/volumen/MeanDen
-        #DeltaCum[k] /= volcum
+    #     volumen = (4.0/3.0)*pi*(Rs^3 - Ri^3)
+    #     Delta[k+1] = Delta[k+1]/volumen/MeanDen
+    #     #Delta[k] /= volumen
+    #     NTrac[k+1] = NTrac[k+1]/volumen/MEAN_NTRAC 
+
+    #     volcum = (4.0/3.0)*pi*(Rs^3)
+    #     DeltaCum[k+1] = DeltaCum[k+1]/volumen/MeanDen
+    #     #DeltaCum[k] /= volcum
+    # end
+    rad = RMIN
+
+    for i in 1:NBINS
+        #tr = @views tcat[(sq_distance .>= rad^2) .& (sq_distance .< (rad+dr)^2), :]
+        tr = @views tcat[(tcat[:,end] .< (rad+dr)) .&& (tcat[:,end] .>= rad), :]
+        mass   = sum(10.0 .^ tr[:,1])
+        volume = (4.0 *pi/ 3.0 )*((rad+dr)^3 - rad^3)
+        
+        Delta[i]   = (mass/volume)/MeanDen # -1.0
+        NTrac[i] = (length(tr[:,1])/volume)/MEAN_NTRAC
+
+        rad += dr
     end
 
-    # for i in 1:NBINS
-    #     #tr = @views tcat[(sq_distance .>= rad^2) .& (sq_distance .< (rad+dr)^2), :]
-    #     tr = @views tcat[(tcat[:,end] .< (rad+dr)^2) .&& (tcat[:,end] .>= rad^2), :]
-    #     mass   = sum(10.0 .^ tr[:,3])
-    #     volume = (4.0 *pi/ 3.0 )*((rad+dr)^3 - rad^3)
-        
-    #     Delta[i]   = (mass/volume)/MeanDenTrac - 1.0
-    #     DenTrac[i] = length(tr[:,1])#/volume
-
-    #     rad += dr
-    # end
-
+    DeltaCum = cumsum(Delta)
     return Delta, DeltaCum, NTrac
 end
 
-
+"""
+Calcula todos los perfiles de las lentes seleccionadas
+"""
 function radial_profile(RMIN, RMAX, dr, 
                         Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max,
                         flag, lensname::String, tracname::String)
@@ -180,7 +188,7 @@ end
 
 # ------------------------------------------------ #
 #                                             main #
-RMIN, RMAX, dr = 0.01, 5., 0.05
+const RMIN, RMAX, DR = 0.01, 5., 0.05
 const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10., 12., 0.2, 0.25, -1., -0.9, 0.2, 100.0, 2
 const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
@@ -188,9 +196,9 @@ const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
 #const tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
 
 const NTRACS = length(read(FITS(tracname)[2], "unique_gal_id"))
-const LBOX = 3072 #Mpc/h
+const LBOX = 3072 #Mpc/h box of mice
+const MEAN_NTRAC = NTRACS/LBOX^3
+const MEANDENSITY = mean_den(z=0,H0=70,Om0=0.3,Ode0=0.7)
 
-## ̄ρₘ = 3 (H₀)² Ωₘ₀ / 8 π G
-
-#radial_profile(RMIN, RMAX, dr, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
+#radial_profile(RMIN, RMAX, DR, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
 
