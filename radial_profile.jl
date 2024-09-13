@@ -70,7 +70,8 @@ function partial_profile(tcat::Matrix{Float64},
                         rv, z, # redshift
                         xv, yv, zv)
     
-    MeanDen = mean_density(z, 70, 0.25, 0.75)
+    # MeanDen = mean_density(z, 70, 0.25, 0.75)
+    MeanDen = critical_density(z, 70, 0.25, 0.75)
 
     NBINS = length(RMIN:DR:RMAX)
     rmin = rv*RMIN
