@@ -153,10 +153,10 @@ end
 #                                             main #
 const RMIN, RMAX, DR = 0.01, 5., 0.05
 const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10., 15., 0.2, 0.3, -1., -0.9, -1.0, 100.0, 2
-const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
-const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
-#const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
-#const tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
+# const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
+# const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
+const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
+const tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
 
 const NTRACS = length(read(FITS(tracname)[2], "unique_gal_id"))
 const LBOX = 3072 #Mpc/h box of mice
