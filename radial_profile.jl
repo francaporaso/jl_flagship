@@ -2,6 +2,7 @@ using DelimitedFiles
 using DataFrames
 using FITSIO
 using Statistics
+# using Distributed
 
 include("cosmology.jl")
 
@@ -86,16 +87,16 @@ function partial_profile(tcat::Matrix{Float64},
     for i in 1:NBINS
         tr = @views tcat[(tcat[:,end] .< (rad+dr)) .&& (tcat[:,end] .>= rad), :]
         mass[i] = sum(10.0 .^ tr[:,1])
-        volume = (4.0 *pi/ 3.0 )*((rad+dr)^3 - rad^3)
-        
-        NTrac[i] = (length(tr[:,1])/volume)/MEAN_NTRAC
+        NTrac[i] = length(tr[:,1])
+
         rad += dr
     end
 
     vol = 4pi/3*[(ri+dr)^3 - ri^3 for ri in rmin:dr:rmax]
-    volcum = 4pi/3*[(ri+dr)^3 for ri in rmin:dr:rmax]
+    volcum = 4pi/3*[(ri+dr)^3 - rmin^3 for ri in rmin:dr:rmax]
     Delta = (mass./vol)/MeanDen
     DeltaCum = (cumsum(mass)./volcum)/MeanDen
+    NTrac ./= vol/MEAN_NTRAC
 
     return Delta, DeltaCum, NTrac
 end
@@ -147,21 +148,3 @@ function radial_profile(RMIN, RMAX, dr,
 
     println("End!")
 end
-
-
-# ------------------------------------------------ #
-#                                             main #
-const RMIN, RMAX, DR = 0.01, 5., 0.05
-const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10., 15., 0.2, 0.3, -1., -0.9, -1.0, 100.0, 2
-# const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
-# const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
-const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
-const tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
-
-const NTRACS = length(read(FITS(tracname)[2], "unique_halo_id"))
-const LBOX = 3072 #Mpc/h box of mice
-const MEAN_NTRAC = NTRACS/LBOX^3
-# const MEANDENSITY = mean_den(0.0, 70, 0.3, 0.7)
-
-radial_profile(RMIN, RMAX, DR, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
-

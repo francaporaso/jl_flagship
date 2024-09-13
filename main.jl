@@ -1,0 +1,28 @@
+using Printf
+include("radial_profile.jl")
+
+# ------------------------------------------------ #
+#                                             main #
+const RMIN, RMAX, DR = 0.01, 5., 0.05
+const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10., 12., 0.2, 0.25, -1., -0.9, 0.2, 100.0, 2
+const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
+const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
+# const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
+# const tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
+
+# const NTRACS = length(read(FITS(tracname)[2], "unique_halo_id"))
+const NTRACS = length(read(FITS(tracname)[2], "unique_gal_id"))
+const LBOX = 3072 #Mpc/h box of mice
+const MEAN_NTRAC = NTRACS/LBOX^3
+# const MEANDENSITY = mean_den(0.0, 70, 0.3, 0.7)
+
+t = @elapsed begin
+    println("NTRACS.....: $NTRACS")
+    println("LBOX.......: $LBOX")
+    println("MEAN_NTRAC.: $MEAN_NTRAC")
+
+    # addprocs(4)
+
+    radial_profile(RMIN, RMAX, DR, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
+end
+@printf("Ended in %.2f seconds \n", t)
