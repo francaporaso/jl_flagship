@@ -163,5 +163,5 @@ const LBOX = 3072 #Mpc/h box of mice
 const MEAN_NTRAC = NTRACS/LBOX^3
 # const MEANDENSITY = mean_den(0.0, 70, 0.3, 0.7)
 
-#radial_profile(RMIN, RMAX, DR, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
+radial_profile(RMIN, RMAX, DR, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
 
