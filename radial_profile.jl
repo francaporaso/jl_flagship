@@ -68,67 +68,35 @@ Calcula el perfil de 1 void dados los trazadores tcat al rededor de (xv,yv,zv)
 """
 function partial_profile(tcat::Matrix{Float64}, 
                         RMIN, RMAX, DR,
-                        rv, xv, yv, zv)
+                        rv, z, # redshift
+                        xv, yv, zv)
     
-    MeanDen   = 1.0
+    MeanDen = mean_density(z, 70, 0.25, 0.75)
 
     NBINS = length(RMIN:DR:RMAX)
-    
     rmin = rv*RMIN
     rmax = rv*RMAX
     dr   = rv*DR
 
-    Delta = zeros(NBINS)
-    # DeltaCum = zeros(NBINS)
     NTrac = zeros(NBINS)
+    mass = zeros(NBINS)
 
-    # for m in 1:size(tcat,1)
-    #     if (tcat[m,end] >= RMIN) && (tcat[m,end] <= RMAX)
-    #         ibin = ceil(Int, (tcat[m,end]-RMIN)/dr)
-    #         Delta[ibin] += 10.0 ^ tcat[m, 3]
-    #         NTrac[ibin] += 1.0
-    #     end
-    # end
-
-    # # for i in 1:NBINS
-    # #     ### cuidado con esto... lo hace Polaco pero no estoy seguro por qué
-    # #     if NTrac[i] < 3.0
-    # #         Delta[i] = 0.0
-    # #         NTrac[i] = 0.0
-    # #     end
-    # # end
-
-    # DeltaCum = cumsum(Delta)
-
-    # for k in 0:NBINS-1
-    #     Ri = k*dr + RMIN
-    #     Rm = (k+0.5)*dr + RMIN
-    #     Rs = (k+1.0)*dr + RMIN
-
-    #     volumen = (4.0/3.0)*pi*(Rs^3 - Ri^3)
-    #     Delta[k+1] = Delta[k+1]/volumen/MeanDen
-    #     #Delta[k] /= volumen
-    #     NTrac[k+1] = NTrac[k+1]/volumen/MEAN_NTRAC 
-
-    #     volcum = (4.0/3.0)*pi*(Rs^3)
-    #     DeltaCum[k+1] = DeltaCum[k+1]/volumen/MeanDen
-    #     #DeltaCum[k] /= volcum
-    # end
     rad = RMIN
 
     for i in 1:NBINS
-        #tr = @views tcat[(sq_distance .>= rad^2) .& (sq_distance .< (rad+dr)^2), :]
         tr = @views tcat[(tcat[:,end] .< (rad+dr)) .&& (tcat[:,end] .>= rad), :]
-        mass   = sum(10.0 .^ tr[:,1])
+        mass[i] = sum(10.0 .^ tr[:,1])
         volume = (4.0 *pi/ 3.0 )*((rad+dr)^3 - rad^3)
         
-        Delta[i]   = (mass/volume)/MeanDen # -1.0
         NTrac[i] = (length(tr[:,1])/volume)/MEAN_NTRAC
-
         rad += dr
     end
 
-    DeltaCum = cumsum(Delta)
+    vol = 4pi/3*[(ri+dr)^3 - ri^3 for ri in rmin:dr:rmax]
+    volcum = 4pi/3*[(ri+dr)^3 for ri in rmin:dr:rmax]
+    Delta = (mass./vol)/MeanDen
+    DeltaCum = (cumsum(mass)./volcum)/MeanDen
+
     return Delta, DeltaCum, NTrac
 end
 
@@ -145,7 +113,7 @@ function radial_profile(RMIN, RMAX, dr,
     tracers_lists = get_tracers(RMAX, dr, L[!,2], L[!,6], L[!,7], L[!,8], tracname=tracname)
     
     nvoids = nrow(L)
-    NBINS = length(RMIN:dr:RMAX)
+    NBINS = length(RMIN:DR:RMAX)
     println("nvoids: $nvoids")
 
     println("Calculating profile...")
@@ -155,32 +123,27 @@ function radial_profile(RMIN, RMAX, dr,
     NTracers = Matrix{Float64}(undef, nvoids, NBINS)
 
     for i in 1:nvoids
-        Delta[i,:], DeltaCum[i,:], NTracers[i,:] = partial_profile(tracers_lists[i], RMIN, RMAX, dr, L[i,2], L[i,6], L[i,7], L[i,8])
-    end
-
-    # display(Delta)
-    # display(DeltaCum)
-
-    begin
-        fig = plot(legend=false, layout=3)
-        for i in 1:nvoids
-            plot!(fig[1], RMIN:dr:RMAX, Delta[i,:], c=:blue)
-            plot!(fig[2], RMIN:dr:RMAX, DeltaCum[i,:], c=:red)
-            plot!(fig[3], RMIN:dr:RMAX, NTracers[i,:], c=:green)   
-        end
-        # display(fig)
-        savefig(fig, "pru.png")
+        Delta[i,:], DeltaCum[i,:], NTracers[i,:] = partial_profile(tracers_lists[i], RMIN, RMAX, DR, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
-    # Delta_mean = mean(Delta, dims=1)'
-    # Delta_std  = std(Delta, dims=1)'
+    Delta_stack = sum(Delta, dims=1)'/nvoids
+    Delta_std  = std(Delta, dims=1)'/nvoids
     
-    # Dentrac_mean = mean(DenTrac, dims=1)'
-    # Dentrac_std  = std(DenTrac, dims=1)'
+    DeltaCum_stack = sum(DeltaCum, dims=1)'/nvoids
+    DeltaCum_std  = std(DeltaCum, dims=1)'/nvoids
 
-    # println("Saving...")
+    NTrac_stack = sum(NTracers, dims=1)'/nvoids
+    NTrac_std = std(NTracers, dims=1)'/nvoids
 
-    # writedlm("pru.csv", Delta, ',')
+    println("Saving...")
+
+    open("pru_stack.csv", "w") do io 
+        writedlm(io, [Delta_stack Delta_std DeltaCum_stack DeltaCum_std NTrac_stack NTrac_std], ',')
+    end
+
+    open("pru_individual.csv", "w") do io 
+        writedlm(io, [Delta DeltaCum NTracers], ',')
+    end
 
     println("End!")
 end
@@ -189,7 +152,7 @@ end
 # ------------------------------------------------ #
 #                                             main #
 const RMIN, RMAX, DR = 0.01, 5., 0.05
-const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10., 12., 0.2, 0.25, -1., -0.9, 0.2, 100.0, 2
+const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10., 15., 0.2, 0.3, -1., -0.9, -1.0, 100.0, 2
 const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
 #const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
@@ -198,7 +161,7 @@ const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
 const NTRACS = length(read(FITS(tracname)[2], "unique_gal_id"))
 const LBOX = 3072 #Mpc/h box of mice
 const MEAN_NTRAC = NTRACS/LBOX^3
-const MEANDENSITY = mean_den(z=0,H0=70,Om0=0.3,Ode0=0.7)
+# const MEANDENSITY = mean_den(0.0, 70, 0.3, 0.7)
 
 #radial_profile(RMIN, RMAX, DR, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
 
