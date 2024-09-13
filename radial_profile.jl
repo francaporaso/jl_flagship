@@ -115,7 +115,7 @@ function radial_profile(RMIN, RMAX, dr,
     
     nvoids = nrow(L)
     NBINS = length(RMIN:DR:RMAX)
-    println("nvoids: $nvoids")
+    println("Nvoids.....: $nvoids")
 
     println("Calculating profile...")
     

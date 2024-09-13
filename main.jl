@@ -25,4 +25,5 @@ t = @elapsed begin
 
     radial_profile(RMIN, RMAX, DR, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
 end
-@printf("Ended in %.2f seconds \n", t)
+t /= 60.0
+@printf("Ended in %.2f minutes \n", t)
