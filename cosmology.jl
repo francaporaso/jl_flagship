@@ -11,12 +11,12 @@ function critical_density(z, H0, Om0, Ode0)
     return 3.0*H2(z,H0,Om0,Ode0)/(8.0*pi*G)
 end
 
+
 """
-ρₘ = 3 (H(z))² Ωₘ₀ / 8 π G * (1+z)^3
-where:
-- [H0] = km/s/Mpc
-- [ρₘ] = M_sun/Mpc^3
+``\\rho_m (z) = \\rho_m (0) a^(-3) ``
+            `` = \\rho_m(0) (1+z)^3 ``
+            `` = 3 H_0 ^2 \\Omega_{m,0} (1+z)^3 / 8 π G ``
 """
 function mean_density(z, H0, Om0, Ode0)
-    return critical_density(z,H0,Om0,Ode0)*Om0*(1+z)^3
+    return critical_density(0.0,H0,Om0,Ode0)*Om0*(1+z)^3
 end
