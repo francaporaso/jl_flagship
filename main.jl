@@ -10,8 +10,8 @@ const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag
 const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
 const tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
 
-# const NTRACS = length(read(FITS(tracname)[2], "unique_halo_id"))
-const NTRACS = length(read(FITS(tracname)[2], "unique_gal_id"))
+# const NTRACS = length(read(FITS(tracname)[2], "unique_gal_id"))
+const NTRACS = length(read(FITS(tracname)[2], "unique_halo_id"))
 const LBOX = 3072 #Mpc/h box of mice
 const MEAN_NTRAC = NTRACS/LBOX^3
 # const MEANDENSITY = mean_den(0.0, 70, 0.3, 0.7)
