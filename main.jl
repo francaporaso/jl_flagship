@@ -3,7 +3,7 @@ include("radial_profile.jl")
 
 # ------------------------------------------------ #
 #                                             main #
-const RMIN, RMAX, DR = 0.01, 5., 0.05
+const RMIN, RMAX, NBINS = 0.5, 4., 100
 const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10., 15., 0.2, 0.25, -1., -0.9, -1.0, 100.0, 2
 # const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 # const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
@@ -24,7 +24,7 @@ t = @elapsed begin
 
     # addprocs(4)
 
-    radial_profile(RMIN, RMAX, DR, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
+    radial_profile(RMIN, RMAX, NBINS, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
 end
 
 t /= 60.0
