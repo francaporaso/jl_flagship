@@ -136,18 +136,18 @@ function partial_profile(tcat::Matrix{Float64},
     NTracCum = cumsum(NTrac)
     MeanDen = mean_density(z, H0, Om0, Ode0)
 
-    for k in 1:NBINS
+    for k in 0:NBINS-1
         Ri = (k*DR + RMIN)*rv
         Rm = ((k+0.5)*DR + RMIN)*rv
         Rs = ((k+1.0)*DR + RMIN)*rv
 
         vol = 4pi/3 * (Rs^3 - Ri^3)
-        Delta[k] = mass[k]/vol/MeanDen #- 1.0
-        NTrac[k] = NTrac[k]/vol/MEAN_NTRAC #- 1.0
+        Delta[k+1] = mass[k+1]/vol/MeanDen #- 1.0
+        NTrac[k+1] = NTrac[k+1]/vol/MEAN_NTRAC #- 1.0
 
         vol = 4pi/3 * (Rs^3)
-        DeltaCum[k] = mass_cum[k]/vol/MeanDen #- 1.0
-        NTracCum[k] = NTracCum[k]/vol/MEAN_NTRAC #- 1.0
+        DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen #- 1.0
+        NTracCum[k+1] = NTracCum[k+1]/vol/MEAN_NTRAC #- 1.0
     end
 
 
