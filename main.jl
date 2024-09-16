@@ -11,15 +11,16 @@ const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
 const tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
 
 # const NTRACS = length(read(FITS(tracname)[2], "unique_gal_id"))
-const NTRACS = length(read(FITS(tracname)[2], "unique_halo_id"))
-const LBOX = 3072 #Mpc/h box of mice
+# const NTRACS = length(read(FITS(tracname)[2], "unique_halo_id"))
+const NTRACS = 4096^3 # según Fosalba et al. 2015
+const LBOX = 3072 #Mpc/h box of mice 
 const MEAN_NTRAC = NTRACS/LBOX^3
 # const MEANDENSITY = mean_den(0.0, 70, 0.3, 0.7)
 
 t = @elapsed begin
     println("NTRACS.....: $NTRACS")
-    println("LBOX.......: $LBOX")
-    println("MEAN_NTRAC.: $MEAN_NTRAC")
+    println("LBOX.......: $LBOX Mpc/h" )
+    println("MEAN_NTRAC.: $MEAN_NTRAC h/Mpc")
 
     # addprocs(4)
 
