@@ -126,7 +126,7 @@ function partial_profile(tcat::Matrix{Float64},
 
     for t in 1:size(tcat)[1]
         if (tcat[t,2] >= RMIN) && (tcat[t,2] <= RMAX)
-            ibin = floor(Int64, (tcat[t,2] - RMIN)/DR)
+            ibin = ceil(Int64, (tcat[t,2] - RMIN)/DR)
             NTrac[ibin] += 1.0
             mass[ibin]  += 10.0 ^ tcat[t,1]
         end
