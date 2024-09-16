@@ -142,12 +142,12 @@ function partial_profile(tcat::Matrix{Float64},
         Rs = ((k+1.0)*DR + RMIN)*rv
 
         vol = 4pi/3 * (Rs^3 - Ri^3)
-        Delta[k] = mass[k]/vol/MeanDen - 1.0
-        NTrac[k] = NTrac[k]/vol/MEAN_NTRAC - 1.0
+        Delta[k] = mass[k]/vol/MeanDen #- 1.0
+        NTrac[k] = NTrac[k]/vol/MEAN_NTRAC #- 1.0
 
         vol = 4pi/3 * (Rs^3)
-        DeltaCum[k] = mass_cum[k]/vol/MeanDen - 1.0
-        NTracCum[k] = NTracCum[k]/vol/MEAN_NTRAC - 1.0
+        DeltaCum[k] = mass_cum[k]/vol/MeanDen #- 1.0
+        NTracCum[k] = NTracCum[k]/vol/MEAN_NTRAC #- 1.0
     end
 
 
