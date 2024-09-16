@@ -6,6 +6,11 @@ using Statistics
 
 include("cosmology.jl")
 
+const H0 = 70.0
+const Om0 = 0.25
+const Ob0 = 0.044
+const Ode0 = 0.75
+
 """
 Loads the lenses catalog
 """
@@ -71,8 +76,7 @@ function partial_profile(tcat::Matrix{Float64},
                         rv, z, # redshift
                         xv, yv, zv)
     
-    # MeanDen = mean_density(z, 70, 0.25, 0.75)
-    MeanDen = critical_density(z, 70, 0.25, 0.75)
+    MeanDen = mean_density(z, H0, Om0, Ode0)
 
     NBINS = length(RMIN:DR:RMAX)
     rmin = rv*RMIN
