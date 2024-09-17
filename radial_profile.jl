@@ -77,7 +77,7 @@ encuentra los trazadores alrededor de cada centro hasta (1+2DR)RMAX*[rv]
 function get_tracers(RMAX::Float64, NBINS::Int64,
                     rv::Vector{Float64}, xv::Vector{Float64}, yv::Vector{Float64}, zv::Vector{Float64}; 
                     tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits",
-                    sorted=false)::Matrix{Float64}
+                    sorted=false) ::Vector{Matrix{Float64}}
 
     tcat = Matrix(DataFrame(FITS(tracname)[2])) ## FITS lee .fits; DataFrame transforma en tabla
     ## tcat[1] = id
@@ -89,14 +89,14 @@ function get_tracers(RMAX::Float64, NBINS::Int64,
 
     DR = RMAX/NBINS
     nvoids = length(rv)
-    trac_list = Matrix{Float64}(undef,0,2)
+    trac_list = Vector{Matrix{Float64}}(undef,nvoids)
 
     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+NBINS)RMAX*rv
     for v in 1:nvoids
         distance = @. sqrt((tcat[:,4] - xv[v])^2 + (tcat[:,5] - yv[v])^2 + (tcat[:,6] - zv[v])^2)
         mask = distance .<= ((1.0+2DR)*RMAX*rv[v])
 
-        trac_list = vcat(trac_list, hcat(tcat[mask,3], distance[mask]/rv[v]))
+        trac_list[v] = hcat(tcat[mask,3], distance[mask]/rv[v])
     end
 
     if sorted
@@ -149,7 +149,6 @@ function partial_profile(tcat::Matrix{Float64},
         DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen #- 1.0
         NTracCum[k+1] = NTracCum[k+1]/vol/MEAN_NTRAC #- 1.0
     end
-
 
     # rad = RMIN
     # for i in 1:NBINS
@@ -211,7 +210,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     NTracers = Matrix{Float64}(undef, nvoids, NBINS)
 
     for i in 1:nvoids
-        Delta[i,:], DeltaCum[i,:], NTracers[i,:] = partial_profile(tracers_lists[i], RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
+        Delta[i,:], DeltaCum[i,:], NTracers[i,:] = partial_profile(tracers_lists[i], RMIN, RMAX, NBINS, L[i,2], L[i,5])
     end
     
     Delta_stack = sum(Delta, dims=1)'/nvoids
