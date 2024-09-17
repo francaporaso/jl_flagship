@@ -18,3 +18,21 @@ function mean_density_box(logm, rv, RMAX, DR)
     vol = 4pi/3 * ((1+2DR)*RMAX*rv)^3
     return mass/vol
 end
+
+### ----------------- main
+L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max)
+nvoids = nrow(L)
+tr = get_tracers(RMAX, NBINS, L[!,2], L[!,6], L[!,7], L[!,8])
+
+@assert typeof(tr) == Vector{Matrix{Float64}}
+
+md_list = zeros(nvoids)
+for i in 1:nvoids
+    md[i] = mean_density_box(tr[i][:,1], L[i,2], RMAX, dr)
+end
+
+open("den_box_test.csv", "w") do io
+    writedlm(io,  md, ',')
+end
+
+println("END!")
