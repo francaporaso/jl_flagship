@@ -28,7 +28,7 @@ function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min
     m_rho  = @. (L[!,9] >= rho1_min) && (L[!,9] <= rho1_max) && (L[!,10] >= rho2_min) && (L[!,10] <= rho2_max)
     m_flag = @. (L[!,12] >= flag) 
 
-    mask = @. m_rv && m_z && m_rho && m_flag
+    mask = @views @. m_rv && m_z && m_rho && m_flag
 
     return L[mask,:]
 end
@@ -88,14 +88,14 @@ function get_tracers(RMAX::Float64, NBINS::Int64,
 
     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+NBINS)RMAX*rv
     @threads for v in 1:nvoids
-        distance = @. sqrt((tcat[:,4] - xv[v])^2 + (tcat[:,5] - yv[v])^2 + (tcat[:,6] - zv[v])^2)
+        distance = @views @. sqrt((tcat[:,4] - xv[v])^2 + (tcat[:,5] - yv[v])^2 + (tcat[:,6] - zv[v])^2)
         mask = distance .<= (RMAX*rv[v])
 
         trac_list[v] = hcat(tcat[mask,3], distance[mask]/rv[v])
     end
 
     if sorted
-        return trac_list[sortperm(trac_list[:,end]), :]
+        return @views trac_list[sortperm(trac_list[:,end]), :]
     end
 
     return trac_list
