@@ -2,6 +2,7 @@ using DelimitedFiles
 using DataFrames
 using FITSIO
 using Statistics
+using Threads
 # using Distributed
 
 include("cosmology.jl")
@@ -86,7 +87,7 @@ function get_tracers(RMAX::Float64, NBINS::Int64,
     trac_list = Vector{Matrix{Float64}}(undef,nvoids)
 
     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+NBINS)RMAX*rv
-    for v in 1:nvoids
+    @threads for v in 1:nvoids
         distance = @. sqrt((tcat[:,4] - xv[v])^2 + (tcat[:,5] - yv[v])^2 + (tcat[:,6] - zv[v])^2)
         mask = distance .<= (RMAX*rv[v])
 
@@ -108,8 +109,6 @@ function partial_profile(tcat::Matrix{Float64},
                         rv::Float64, z::Float64)
     
 
-    DR = (RMAX-RMIN)/NBINS
-
     NTrac = zeros(NBINS)
     mass = zeros(NBINS)
     Delta = zeros(NBINS)
@@ -117,6 +116,7 @@ function partial_profile(tcat::Matrix{Float64},
  
     ### calculamos el bin al que corresponde cada particula y sumando en el array 
     ### que corresponde (masa o trazador)
+    DR = (RMAX-RMIN)/NBINS
 
     for t in 1:size(tcat)[1]
         if (tcat[t,2] >= RMIN) && (tcat[t,2] <= RMAX)
@@ -132,7 +132,7 @@ function partial_profile(tcat::Matrix{Float64},
 
     for k in 0:NBINS-1
         Ri = (k*DR + RMIN)*rv
-        Rm = ((k+0.5)*DR + RMIN)*rv
+        # Rm = ((k+0.5)*DR + RMIN)*rv
         Rs = ((k+1.0)*DR + RMIN)*rv
 
         vol = 4pi/3 * (Rs^3 - Ri^3)
