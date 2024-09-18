@@ -5,7 +5,16 @@ using Statistics
 using Base.Threads
 # using Distributed
 
-include("cosmology.jl")
+"""
+Mean density of the universe, calculated like:
+``\\rho_m (z) = \\rho_m (0) a^(-3) ``
+            `` = \\rho_m(0) (1+z)^3 ``
+            `` = 3 H_0 ^2 \\Omega_{m,0} (1+z)^3 / 8 π G ``
+"""
+function mean_density(z; H0=100.0, Om0=0.25, Ode0=0.75)
+    G = 4.30091727e-9 # (km/s)² Mpc / M_sun
+    return 3.0*H0*Om0*(1+z)^3/(8.0*pi*G)
+end
 
 """
 Loads the lenses catalog
@@ -33,38 +42,38 @@ function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min
     return L[mask,:]
 end
 
-"""
-Dado un sólo centro (xv,yv,zv) y su radio rv, encuentra los trazadores
-al rededor de ese hasta (1+2DR)RMAX*rv
-"""
-function get_tracers(RMAX::Float64, NBINS::Int64,
-    rv::Float64, xv::Float64, yv::Float64, zv::Float64; 
-    tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits",
-    sorted=false)
+# """
+# Dado un sólo centro (xv,yv,zv) y su radio rv, encuentra los trazadores
+# al rededor de ese hasta (1+2DR)RMAX*rv
+# """
+# function get_tracers(RMAX::Float64, NBINS::Int64,
+#     rv::Float64, xv::Float64, yv::Float64, zv::Float64; 
+#     tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits",
+#     sorted=false)
 
-    tcat = Matrix(DataFrame(FITS(tracname)[2])) ## FITS lee .fits; DataFrame transforma en tabla
-    ## tcat[1] = id
-    ## tcat[2] = flagcentral
-    ## tcat[3] = lmhalo
-    ## tcat[4] = xhalo
-    ## tcat[5] = yhalo
-    ## tcat[6] = zhalo
+#     tcat = Matrix(DataFrame(FITS(tracname)[2])) ## FITS lee .fits; DataFrame transforma en tabla
+#     ## tcat[1] = id
+#     ## tcat[2] = flagcentral
+#     ## tcat[3] = lmhalo
+#     ## tcat[4] = xhalo
+#     ## tcat[5] = yhalo
+#     ## tcat[6] = zhalo
 
-    DR = RMAX/NBINS
-    trac_list = Matrix{Float64}(undef,0,2)
+#     DR = RMAX/NBINS
+#     trac_list = Matrix{Float64}(undef,0,2)
 
-    ### Máscara en una bola con centro (xv,yv,zv) y radio (1+2DR)RMAX*rv
-    distance = @. sqrt((tcat[:,4] - xv)^2 + (tcat[:,5] - yv)^2 + (tcat[:,6] - zv)^2)
-    mask = distance .<= (RMAX*rv)
+#     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+2DR)RMAX*rv
+#     distance = @. sqrt((tcat[:,4] - xv)^2 + (tcat[:,5] - yv)^2 + (tcat[:,6] - zv)^2)
+#     mask = distance .<= (RMAX*rv)
 
-    trac_list = vcat(trac_list, hcat(tcat[mask,3], distance[mask]/rv))
+#     trac_list = vcat(trac_list, hcat(tcat[mask,3], distance[mask]/rv))
 
-    if sorted
-        return trac_list[sortperm(trac_list[:,end]), :]
-    end
+#     if sorted
+#         return trac_list[sortperm(trac_list[:,end]), :]
+#     end
 
-    return trac_list
-end
+#     return trac_list
+# end
 
 """
 Dado un cto de centros ([xv], [yv], [zv]) con sus radios [rv]
