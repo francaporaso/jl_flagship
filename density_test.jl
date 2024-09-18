@@ -122,7 +122,6 @@ function test_comoving_shell()
     println("TUKI!")
 end
 
-
 function plot_result(voidid, ρ, ρ_universe)
     p = plot(legend=:outertopright)
     # plot!(p, L[!, 1], md, label="Mean density box")
@@ -134,14 +133,15 @@ end
 
 ### ---------------------------------------------- main
 t = @elapsed begin
+    # test_box_shell()
     test_comoving_shell()
 end
 println("terminado en $t sec")
 
-pp = true
+# pp = true
 
-if pp
-    using Plots
-    dat = readdlm("den_box_test.csv", ',')
-    plot_result(range(length=size(dat)[1]), dat[:,1], dat[:,2])
-end
+# if pp
+#     using Plots
+#     dat = readdlm("den_box_test.csv", ',')
+#     plot_result(range(length=size(dat)[1]), dat[:,1], dat[:,2])
+# end
