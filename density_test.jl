@@ -24,10 +24,10 @@ const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
 const tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
 
 # leyendo cat de lentes
-L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max)
+L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, lensname=lensname)
 nvoids = nrow(L)
 # leyendo halos al rededro de xv, yv, zv hasta RMAX
-tr = get_tracers(RMAX, NBINS, L[!,2], L[!,6], L[!,7], L[!,8])
+tr = get_tracers(RMAX, NBINS, L[!,2], L[!,6], L[!,7], L[!,8], tracname=tracname)
 
 # calculando la densidad media de cada void en caja
 ρ = zeros(nvoids)
