@@ -2,7 +2,7 @@ using DelimitedFiles
 using DataFrames
 using FITSIO
 using Statistics
-using Threads
+using Base.Threads
 # using Distributed
 
 include("cosmology.jl")
