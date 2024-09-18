@@ -131,19 +131,10 @@ function plot_result(voidid, ρ, ρ_universe)
     display(p)
 end
 
-function plot_result!(p, voidid, ρ, ρ_universe)
-    # p = plot(legend=:outertopright)
-    # plot!(p, L[!, 1], md, label="Mean density box")
-    # plot!(p, L[!, 1], md_universe, label="Mean density universe")
-    plot!(p, voidid, ρ ./ ρ_universe, label="\\rho_{box} / \\rho_{uni} ")
-    plot!(yscale=:log10)
-    display(p)
-end
-
 
 ### ---------------------------------------------- main
 t = @elapsed begin
-    # test_box_shell()
+    test_box_shell()
     test_comoving_shell()
 end
 println("terminado en $t sec")
