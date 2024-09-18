@@ -72,7 +72,7 @@ encuentra los trazadores alrededor de cada centro hasta (1+2DR)RMAX*[rv]
 function get_tracers(RMAX::Float64, NBINS::Int64,
                     rv::Vector{Float64}, xv::Vector{Float64}, yv::Vector{Float64}, zv::Vector{Float64}; 
                     tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits",
-                    sorted=false) ::Vector{Matrix{Float64}}
+                    sorted=false)
 
     tcat = Matrix(DataFrame(FITS(tracname)[2])) ## FITS lee .fits; DataFrame transforma en tabla
     ## tcat[1] = id
@@ -82,7 +82,6 @@ function get_tracers(RMAX::Float64, NBINS::Int64,
     ## tcat[5] = yhalo
     ## tcat[6] = zhalo
 
-    DR = RMAX/NBINS
     nvoids = length(rv)
     trac_list = Vector{Matrix{Float64}}(undef,nvoids)
 
