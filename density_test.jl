@@ -134,7 +134,7 @@ end
 
 ### ---------------------------------------------- main
 t = @elapsed begin
-    test_box_shell()
+    test_box()
     test_comoving_shell()
 end
 println("terminado en $t sec")
