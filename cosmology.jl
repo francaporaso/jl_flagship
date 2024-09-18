@@ -1,3 +1,8 @@
+const H0 = 100.0
+const Om0 = 0.25
+const Ob0 = 0.044
+const Ode0 = 0.75
+
 """
 Hubble parameter squared (E function)
 """
