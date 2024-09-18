@@ -13,7 +13,7 @@ Mean density of the universe, calculated like:
 """
 function mean_density(z; H0=100.0, Om0=0.25, Ode0=0.75)
     G = 4.30091727e-9 # (km/s)² Mpc / M_sun
-    return 3.0*H0*Om0*(1+z)^3/(8.0*pi*G)
+    return 3.0*H0^2*Om0*(1+z)^3/(8.0*pi*G)
 end
 
 """
