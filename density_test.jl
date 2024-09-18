@@ -25,7 +25,8 @@ function test()
     # leyendo cat de lentes
     println("leyendo voids")
     L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, lensname=lensname)
-    println("nvoids:", nrow(L))
+    nvoids = nrow(L)
+    println("$nvoids")
     # leyendo halos al rededro de xv, yv, zv hasta RMAX
     println("leyendo halos")
     tr = get_tracers(RMAX, NBINS, L[!,2], L[!,6], L[!,7], L[!,8], tracname=tracname)
