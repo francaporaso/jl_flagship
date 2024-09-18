@@ -42,7 +42,7 @@ function test()
     println("calculado den media teorica")
     ρ_universe = mean_density.(L[!,5], H0, Om0, Ode0)
 
-    if ρ ./ ρ_universe <= 10.0
+    if ρ ./ ρ_universe .<= 10.0
         println("DAN IGUAL!, TEST APROBADO")
     end
 
