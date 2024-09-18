@@ -6,11 +6,6 @@ using Statistics
 
 include("cosmology.jl")
 
-const H0 = 70.0
-const Om0 = 0.25
-const Ob0 = 0.044
-const Ode0 = 0.75
-
 """
 Loads the lenses catalog
 """
@@ -59,7 +54,7 @@ function get_tracers(RMAX::Float64, NBINS::Int64,
 
     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+2DR)RMAX*rv
     distance = @. sqrt((tcat[:,4] - xv)^2 + (tcat[:,5] - yv)^2 + (tcat[:,6] - zv)^2)
-    mask = distance .<= ((1.0+2DR)*RMAX*rv)
+    mask = distance .<= (RMAX*rv)
 
     trac_list = vcat(trac_list, hcat(tcat[mask,3], distance[mask]/rv))
 
@@ -94,7 +89,7 @@ function get_tracers(RMAX::Float64, NBINS::Int64,
     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+NBINS)RMAX*rv
     for v in 1:nvoids
         distance = @. sqrt((tcat[:,4] - xv[v])^2 + (tcat[:,5] - yv[v])^2 + (tcat[:,6] - zv[v])^2)
-        mask = distance .<= ((1.0+2DR)*RMAX*rv[v])
+        mask = distance .<= (RMAX*rv[v])
 
         trac_list[v] = hcat(tcat[mask,3], distance[mask]/rv[v])
     end
