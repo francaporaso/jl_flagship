@@ -212,11 +212,11 @@ function radial_profile(RMIN, RMAX, NBINS,
     println("rho2min....: $rho2_min")
     println("rho2max....: $rho2_max")
 
-    Rho   = Matrix{Float64}(undef, NBINS, nvoids)
-    RhoCum = Matrix{Float64}(undef, NBINS, nvoids)
-    NHalos = Matrix{Float64}(undef, NBINS, nvoids)
-    NHalosCum = Matrix{Float64}(undef, NBINS, nvoids)
-    MeanDen = Matrix{Float64}(undef, NBINS, nvoids)
+    Rho   = zeros(NBINS, nvoids)
+    RhoCum = zeros(NBINS, nvoids)
+    NHalos = zeros(NBINS, nvoids)
+    NHalosCum = zeros(NBINS, nvoids)
+    MeanDen = zeros(NBINS, nvoids)
 
     @threads for i in 1:nvoids
         Rho[:,i], RhoCum[:,i], NHalos[:,i], NHalosCum[:,i], MeanDen[:,i] .= partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
