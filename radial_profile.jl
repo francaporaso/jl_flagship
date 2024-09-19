@@ -26,6 +26,27 @@ function mean_density_ball(logm, rv, RMAX)
 end
 
 """
+Mean density in a comoving shell centered in
+the observer between √(xᵥ+yᵥ+zᵥ)-RMAX*rv and √(xᵥ+yᵥ+zᵥ)-RMAX*rv , in [Msun h^2 / Mpc^3]
+"""
+function mean_density_comovilshell(S, RMAX,
+                                   rv, xv, yv, zv)
+
+# cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
+χ_min = sqrt(xv^2 + yv^2 + zv^2) - RMAX*rv
+χ_max = sqrt(xv^2 + yv^2 + zv^2) + RMAX*rv
+
+m1 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) > χ_min
+m2 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) < χ_max
+logm = S[m1 .&& m2, end]
+
+vol = (1/8)*(4pi/3)*(χ_max^3 - χ_min^3)
+mass = sum(10.0 .^ logm)
+
+return mass/vol
+end
+
+"""
 Loads the lenses catalog
 """
 function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max; 
@@ -66,14 +87,16 @@ function traccat_load(z_min, z_max;
     ## S.flag_central
     ## S.cgal (comoving distance)
     f = FITS(tracname)[2]
-    S = Matrix{Float32}([read(f, "z_cgal") read(f, "xhalo") read(f, "yhalo") read(f, "zhalo") read(f, "lmhalo") read(f, "flag_central")])
+    S = Matrix{Float32}([read(f, "z_cgal") read(f, "xhalo") read(f, "yhalo") read(f, "zhalo") read(f, "lmhalo")]) #read(f, "flag_central")])
 
-    m_z    = @. (S[:,1] >= z_min) && (S[:,1] <= z_max)
-    m_flag = @. (S[:,end] == zero(Float32)) ## halos centrales
+    m_z = @. (S[:,1] >= z_min) && (S[:,1] <= z_max)
+    
+    ### para el catalogo q tenemos ya están filtrados, este paso es al pedo
+    # m_flag = @. (S[:,end] == zero(Float32)) ## halos centrales
+    # mask = @views @. m_z && m_flag
+    # return S[mask,2:5]    
 
-    mask = @views @. m_z && m_flag
-
-    return S[mask,2:5]
+    return S[m_z,2:end]
 end
 
 
@@ -108,6 +131,7 @@ function partial_profile(S::Matrix{Float32},
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
     tcat = get_halos(S, RMIN, RMAX, NBINS, rv, xv, yv, zv)
+    MeanDen = mean_density_comovilshell(S, RMAX, rv, xv, yv, zv)
 
     NHalos   = zeros(NBINS)
     mass     = zeros(NBINS)
@@ -129,7 +153,6 @@ function partial_profile(S::Matrix{Float32},
     mass_cum = cumsum(mass)
     NHalosCum = cumsum(NHalos)
     # MeanDen = mean_density_ball(tcat[:,1], rv, RMAX)
-    MeanDen = mean_density_universe(z)
 
     for k in 0:NBINS-1
         Ri = (k*DR + RMIN)*rv
