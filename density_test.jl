@@ -25,8 +25,8 @@ function get_tracers_z(z_min, z_max, xv, yv, zv;
     ### Máscara en una cáscara esférica con centro (xv,yv,zv) y radios comoving_radial_dist(z_min),comoving_radial_dist(z_min) 
     cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
     distance = @views @. sqrt((tcat[:,4] - xv)^2 + (tcat[:,5] - yv)^2 + (tcat[:,6] - zv)^2)
-    m1 = distance .<= ustrip(comoving_radial_dist(cosmo, z_max))
-    m2 = distance .>= ustrip(comoving_radial_dist(cosmo, z_min))
+    m1 = distance .< ustrip(comoving_radial_dist(cosmo, z_max))
+    m2 = distance .> ustrip(comoving_radial_dist(cosmo, z_min))
 
     trac_list = vcat(tcat[m1 .&& m2, 3])
 
@@ -39,7 +39,7 @@ function mean_density_comovilshell(z_min, z_max;
     cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
     vol = (1/8)*(4pi/3)*(ustrip(comoving_radial_dist(cosmo, z_max))^3 - ustrip(comoving_radial_dist(cosmo, z_min))^3)
     halos = get_tracers_z(z_min, z_max, 0.0, 0.0, 0.0, tracname=tracname)
-    mass = sum(10.0 .^ halos[:])
+    mass = sum(10.0 .^ halos)
 
     return mass/vol
 end
@@ -52,7 +52,7 @@ function test_box()
     # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
     # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
     lensname = "/mnt/simulations/MICE/voids_MICE.dat"
-    tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
+    tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 
     # leyendo cat de lentes
     println("leyendo voids")
@@ -94,7 +94,7 @@ function test_comoving_shell()
     # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
     # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits"
     lensname = "/mnt/simulations/MICE/voids_MICE.dat"
-    tracname = "/home/fcaporaso/cats/MICE/micecat2_halos_full.fits"
+    tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 
     # leyendo cat de lentes
     println("leyendo voids")
