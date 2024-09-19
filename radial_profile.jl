@@ -213,7 +213,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     println("rho2max....: $rho2_max")
 
     Rho   = Matrix{Float64}(undef, NBINS, nvoids)
-    RhoCum = Matrix{Float64}(undef, NBINS, novids)
+    RhoCum = Matrix{Float64}(undef, NBINS, nvoids)
     NHalos = Matrix{Float64}(undef, NBINS, nvoids)
     NHalosCum = Matrix{Float64}(undef, NBINS, nvoids)
     MeanDen = Matrix{Float64}(undef, NBINS, nvoids)
