@@ -299,7 +299,7 @@ function test_profile(RMIN, RMAX, NBINS,
     println("Saving...")
 
     open("test_profile.csv", "w") do io 
-        writedlm(io, [Delta DeltaCum NHalos NHalosCum], ',')    
+        writedlm(io, [Delta DeltaCum Rho RhoCum NHalos NHalosCum], ',')    
     end
 
     println("Done!")
