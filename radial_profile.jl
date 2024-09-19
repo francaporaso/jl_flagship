@@ -228,8 +228,8 @@ function radial_profile(RMIN, RMAX, NBINS,
     DeltaCum_stack = sum(RhoCum .-1, dims=2) / sum(MeanDen)
     # DeltaCum_std  = std(DeltaCum, dims=1)'/nvoids
 
-    NHalos = sum(Nhalos, dims=2) / nvoids
-    NHalosCum = sum(NhalosCum, dims=2) / nvoids
+    NHalos = sum(NHalos, dims=2) / nvoids
+    NHalosCum = sum(NHalosCum, dims=2) / nvoids
     # NHalos_std = std(Nhalos, dims=2) / nvoids
     println("Done!")
 
