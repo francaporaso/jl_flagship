@@ -219,7 +219,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     MeanDen = Matrix{Float64}(undef, NBINS, nvoids)
 
     @threads for i in 1:nvoids
-        Rho[:,i], RhoCum[:,i], NHalos[:,i], NHalosCum[:,i], MeanDen[:,i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
+        Rho[:,i], RhoCum[:,i], NHalos[:,i], NHalosCum[:,i], MeanDen[:,i] .= partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
     Delta_stack = sum(Rho .-1, dims=2) ./ sum(MeanDen, dims=2)
