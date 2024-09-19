@@ -43,7 +43,7 @@ function mean_density_comovilshell(S, RMAX,
     vol = (1/8)*(4pi/3)*(χ_max^3 - χ_min^3)
     mass = sum(10.0 .^ logm)
 
-    return mass/vol
+    return mass/vol, length(logm)/vol
 end
 
 """
@@ -131,7 +131,7 @@ function partial_profile(S::Matrix{Float32},
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
     tcat = get_halos(S, RMIN, RMAX, NBINS, rv, xv, yv, zv)
-    MeanDen = mean_density_comovilshell(S, RMAX, rv, xv, yv, zv)
+    MeanDen, MeanNTrac = mean_density_comovilshell(S, RMAX, rv, xv, yv, zv)
 
     NHalos   = zeros(NBINS)
     mass     = zeros(NBINS)
@@ -163,13 +163,13 @@ function partial_profile(S::Matrix{Float32},
         # Delta[k+1] = mass[k+1]/vol/MeanDen - 1.0
         # NHalos[k+1] = NHalos[k+1]/vol/MEAN_NTRAC - 1.0
         Rho[k+1] = mass[k+1]/vol
-        NHalos[k+1] = NHalos[k+1]/vol
+        NHalos[k+1] = NHalos[k+1]/vol/MeanNTrac - 1.0
 
         vol = (4pi/3) * (Rs^3)
         # DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen - 1.0
         # NHalosCum[k+1] = NHalosCum[k+1]/vol/MEAN_NTRAC - 1.0
         RhoCum[k+1] = mass_cum[k+1]/vol
-        NHalosCum[k+1] = NHalosCum[k+1]/vol
+        NHalosCum[k+1] = NHalosCum[k+1]/vol/MeanNTrac - 1.0
     end
 
     return Rho, RhoCum, NHalos, NHalosCum, MeanDen
@@ -212,33 +212,36 @@ function radial_profile(RMIN, RMAX, NBINS,
     println("rho2min....: $rho2_min")
     println("rho2max....: $rho2_max")
 
-    Delta   = Matrix{Float64}(undef, nvoids, NBINS)
-    DeltaCum = Matrix{Float64}(undef, nvoids, NBINS)
-    Nhalos = Matrix{Float64}(undef, nvoids, NBINS)
+    Rho   = Matrix{Float64}(undef, NBINS, nvoids)
+    RhoCum = Matrix{Float64}(undef, NBINS, novids)
+    NHalos = Matrix{Float64}(undef, NBINS, nvoids)
+    NHalosCum = Matrix{Float64}(undef, NBINS, nvoids)
+    MeanDen = Matrix{Float64}(undef, NBINS, nvoids)
 
-    for i in 1:nvoids
-        Delta[i,:], DeltaCum[i,:], Nhalos[i,:] = partial_profile(S,RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
+    @threads for i in 1:nvoids
+        Rho[:,i], RhoCum[:,i], NHalos[:,i], NHalosCum[:,i], MeanDen[:,i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
-    Delta_stack = sum(Delta, dims=1)'/nvoids
-    Delta_std  = std(Delta, dims=1)'/nvoids
+    Delta_stack = sum(Rho .-1, dims=2) ./ sum(MeanDen, dims=2)
+    # Delta_std  = std(Delta, dims=1)'/nvoids
     
-    DeltaCum_stack = sum(DeltaCum, dims=1)'/nvoids
-    DeltaCum_std  = std(DeltaCum, dims=1)'/nvoids
+    DeltaCum_stack = sum(RhoCum .-1, dims=2) ./ sum(MeanDen, dims=2)
+    # DeltaCum_std  = std(DeltaCum, dims=1)'/nvoids
 
-    NTrac_stack = sum(Nhalos, dims=1)'/nvoids
-    NTrac_std = std(Nhalos, dims=1)'/nvoids
+    NHalos = sum(Nhalos, dims=2) / nvoids
+    NHalosCum = sum(NhalosCum, dims=2) / nvoids
+    # NHalos_std = std(Nhalos, dims=2) / nvoids
     println("Done!")
 
     println("......................")
     println("Saving...")
 
     open("pru_stack.csv", "w") do io 
-        writedlm(io, [Delta_stack Delta_std DeltaCum_stack DeltaCum_std NTrac_stack NTrac_std], ',')
+        writedlm(io, [Delta_stack DeltaCum_stack NHalos NHalosCum], ',')
     end
 
     open("pru_individual.csv", "w") do io 
-        writedlm(io, [Delta DeltaCum Nhalos], ',')
+        writedlm(io, [Rho RhoCum MeanDen], ',')
     end
 
     println("Done!")
