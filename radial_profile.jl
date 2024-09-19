@@ -6,14 +6,23 @@ using Base.Threads
 # using Distributed
 
 """
-Mean density of the universe, calculated like:
+Mean density of the universe in [Msun h^2 / Mpc^3], calculated like:
 ``\\rho_m (z) = \\rho_m (0) a^(-3) ``
             `` = \\rho_m(0) (1+z)^3 ``
             `` = 3 H_0 ^2 \\Omega_{m,0} (1+z)^3 / 8 π G ``
 """
-function mean_density(z; H0=100.0, Om0=0.25, Ode0=0.75)
+function mean_density_universe(z; H0=100.0, Om0=0.25, Ode0=0.75)
     G = 4.30091727e-9 # (km/s)² Mpc / M_sun
     return 3.0*H0^2*Om0*(1+z)^3/(8.0*pi*G)
+end
+
+"""
+Mean density in a ball centered in rv and radius RMAX*rv, mean den in [Msun h^2 / Mpc^3]
+"""
+function mean_density_ball(logm, rv, RMAX)
+    mass = sum(10.0 .^ logm)
+    vol = (4pi/3) * (RMAX*rv)^3
+    return mass/vol
 end
 
 """
@@ -77,7 +86,7 @@ end
 
 """
 Dado un cto de centros ([xv], [yv], [zv]) con sus radios [rv]
-encuentra los trazadores alrededor de cada centro hasta (1+2DR)RMAX*[rv]
+encuentra los trazadores alrededor de cada centro hasta RMAX*[rv]
 """
 function get_tracers(RMAX::Float64, NBINS::Int64,
                     rv::Vector{Float64}, xv::Vector{Float64}, yv::Vector{Float64}, zv::Vector{Float64}; 
@@ -137,7 +146,7 @@ function partial_profile(tcat::Matrix{Float64},
     
     mass_cum = cumsum(mass)
     NTracCum = cumsum(NTrac)
-    MeanDen = mean_density(z, H0, Om0, Ode0)
+    MeanDen = mean_density(z)
 
     for k in 0:NBINS-1
         Ri = (k*DR + RMIN)*rv
