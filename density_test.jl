@@ -3,11 +3,12 @@ using Cosmology
 using Unitful
 include("radial_profile.jl")
 
-function mean_density_box(logm, rv, RMAX)
-    mass = sum(10.0 .^ logm)
-    vol = (4pi/3) * (RMAX*rv)^3
-    return mass/vol
-end
+### already in radial_profile.jl
+# function mean_density_ball(logm, rv, RMAX)
+#     mass = sum(10.0 .^ logm)
+#     vol = (4pi/3) * (RMAX*rv)^3
+#     return mass/vol
+# end
 
 function get_tracers_z(z_min, z_max, xv, yv, zv; 
     tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits")
@@ -44,8 +45,8 @@ function mean_density_comovilshell(z_min, z_max;
     return mass/vol
 end
 
-function test_box()
-    println("testing box")
+function test_ball()
+    println("testing ball")
 
     RMIN, RMAX, NBINS = 0.05, 5., 100
     Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10., 12., 0.2, 0.25, -1., -0.9, -1.0, 100.0, 2
@@ -67,9 +68,9 @@ function test_box()
     println("calculando densidades en la bola")
     # ρ = zeros(nvoids)
     # @threads for i in 1:nvoids
-    #     ρ[i] = mean_density_box(tr[i][:,1], L[i,2], RMAX)
+    #     ρ[i] = mean_density_ball(tr[i][:,1], L[i,2], RMAX)
     # end
-    ρ = mean_density_box.(tr[:][:,1], L[!,2], RMAX)
+    ρ = mean_density_ball.(tr[:][:,1], L[!,2], RMAX)
 
     # densidad media teorica
     println("calculado den media teorica")
@@ -80,7 +81,7 @@ function test_box()
     # end
 
     println("guardando")
-    open("den_box_test.csv", "w") do io
+    open("den_ball_test.csv", "w") do io
         writedlm(io,  [ρ ρ_universe], ',')
     end
 
@@ -121,9 +122,9 @@ end
 
 function plot_result(voidid, ρ, ρ_universe)
     p = plot(legend=:outertopright)
-    # plot!(p, L[!, 1], md, label="Mean density box")
+    # plot!(p, L[!, 1], md, label="Mean density ball")
     # plot!(p, L[!, 1], md_universe, label="Mean density universe")
-    plot!(p, voidid, ρ ./ ρ_universe, label="\\rho_{box} / \\rho_{uni} ")
+    plot!(p, voidid, ρ ./ ρ_universe, label="\\rho_{ball} / \\rho_{uni} ")
     plot!(yscale=:log10)
     display(p)
 end
@@ -131,7 +132,7 @@ end
 
 ### ---------------------------------------------- main
 t = @elapsed begin
-    test_box()
+    test_ball()
     # test_comoving_shell()
 end
 println("terminado en $t sec")
