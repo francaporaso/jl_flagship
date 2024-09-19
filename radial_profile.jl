@@ -218,7 +218,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     NHalosCum = zeros(NBINS, nvoids)
     MeanDen = zeros(NBINS, nvoids)
 
-    @threads for i in 1:nvoids
+    for i in 1:nvoids
        res = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
 
        Rho[:,i] = res[1]
