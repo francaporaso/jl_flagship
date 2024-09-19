@@ -290,8 +290,8 @@ function test_profile(RMIN, RMAX, NBINS,
     NHalosCum = [res[1][4] res[2][4] res[3][4]]
     MeanDen = [res[1][5] res[2][5] res[3][5]]
 
-    Delta = sum(Rho, dims=2)/sum(MeanDen, dims=2) - 1.0
-    DeltaCum = sum(RhoCum, dims=2)/sum(MeanDen, dims=2) - 1.0
+    Delta = sum(Rho, dims=2)/sum(MeanDen, dims=2) .- 1.0
+    DeltaCum = sum(RhoCum, dims=2)/sum(MeanDen, dims=2) .- 1.0
     
     println("Done!")
 
