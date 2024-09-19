@@ -232,7 +232,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     NHalosCum = sum(NHalosCum, dims=2) / nvoids
     # NHalos_std = std(Nhalos, dims=2) / nvoids
     println("Done!")
-
+    
     println("......................")
     println("Saving...")
 
