@@ -12,12 +12,12 @@ Mean density of the universe in [Msun h^2 / Mpc^3], calculated like:
             `` = 3 H_0 ^2 \\Omega_{m,0} (1+z)^3 / 8 π G ``
 """
 function mean_density_universe(z; H0=100.0, Om0=0.25, Ode0=0.75)
-    G = 4.30091727e-9 # (km/s)² Mpc / M_sun
+    G = 4.3009173e-9 # (km/s)² Mpc / M_sun
     return 3.0*H0^2*Om0*(1+z)^3/(8.0*pi*G)
 end
 
 """
-Mean density in a ball centered in rv and radius RMAX*rv, mean den in [Msun h^2 / Mpc^3]
+Mean density in a ball centered in rv and radius RMAX*rv, in [Msun h^2 / Mpc^3]
 """
 function mean_density_ball(logm, rv, RMAX)
     mass = sum(10.0 .^ logm)
@@ -39,7 +39,7 @@ function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min
     ## L[9] = rho1
     ## L[10] = rho2
     ## L[12] = flag
-    L = DataFrame(readdlm(lensname), :auto)
+    L = DataFrame(readdlm(lensname, Float32), :auto)
 
     m_rv   = @. (L[!,2] >= Rv_min) && (L[!,2] <= Rv_max)
     m_z    = @. (L[!,5] >= z_min) && (L[!,5] <= z_max)
@@ -82,8 +82,8 @@ Dado un sólo centro (xv,yv,zv) y su radio rv, encuentra los halos
 al rededor del centro entre RMIN*rv hasta RMAX*rv
 """
 function get_halos(S::Matrix{Float32},
-                   RMIN::Float64, RMAX::Float64, NBINS::Int64,
-                   rv::Float64, xv::Float64, yv::Float64, zv::Float64)
+                   RMIN, RMAX, NBINS,
+                   rv, xv, yv, zv)
 
 
     halos_list = Matrix{Float64}(undef,0,2)
@@ -98,47 +98,12 @@ function get_halos(S::Matrix{Float32},
     return halos_list
 end
 
-# """
-# Dado un cto de centros ([xv], [yv], [zv]) con sus radios [rv]
-# encuentra los trazadores alrededor de cada centro hasta RMAX*[rv]
-# """
-# function get_halos(RMAX::Float64, NBINS::Int64,
-#                     rv::Vector{Float64}, xv::Vector{Float64}, yv::Vector{Float64}, zv::Vector{Float64}; 
-#                     tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits",
-#                     sorted=false)
-
-#     tcat = Matrix(DataFrame(FITS(tracname)[2])) ## FITS lee .fits; DataFrame transforma en tabla
-#     ## tcat[1] = id
-#     ## tcat[2] = flagcentral
-#     ## tcat[3] = lmhalo
-#     ## tcat[4] = xhalo
-#     ## tcat[5] = yhalo
-#     ## tcat[6] = zhalo
-
-#     nvoids = length(rv)
-#     trac_list = Vector{Matrix{Float64}}(undef,nvoids)
-
-#     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+NBINS)RMAX*rv
-#     @threads for v in 1:nvoids
-#         distance = @views @. sqrt((tcat[:,4] - xv[v])^2 + (tcat[:,5] - yv[v])^2 + (tcat[:,6] - zv[v])^2)
-#         mask = distance .<= (RMAX*rv[v])
-
-#         trac_list[v] = hcat(tcat[mask,3], distance[mask]/rv[v])
-#     end
-
-#     if sorted
-#         return @views trac_list[sortperm(trac_list[:,end]), :]
-#     end
-
-#     return trac_list
-# end
-
 """
-Calcula el perfil de 1 void dados los trazadores tcat
+Calcula el perfil de 1 void dados los halos S
 """
 function partial_profile(S::Matrix{Float32}, 
-                         RMIN::Float64, RMAX::Float64, NBINS::Int64,
-                         rv::Float64, z::Float64, xv::Float64, yv::Float64, zv::Float64)
+                         RMIN, RMAX, NBINS,
+                         rv, z, xv, yv, zv)
     
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
@@ -154,8 +119,8 @@ function partial_profile(S::Matrix{Float32},
     DR = (RMAX-RMIN)/NBINS
 
     for t in 1:size(tcat)[1]
-        if (tcat[t,2] >= RMIN) && (tcat[t,2] <= RMAX)
-            ibin = ceil(Int64, (tcat[t,2] - RMIN)/DR)
+        if (tcat[t,2] >= RMIN) && (tcat[t,2] <= RMAX)   
+            ibin = ceil(Int32, (tcat[t,2] - RMIN)/DR)
             NHalos[ibin] += 1.0
             mass[ibin]  += 10.0 ^ tcat[t,1]
         end
@@ -168,32 +133,16 @@ function partial_profile(S::Matrix{Float32},
     for k in 0:NBINS-1
         Ri = (k*DR + RMIN)*rv
         # Rm = ((k+0.5)*DR + RMIN)*rv
-        Rs = ((k+1.0)*DR + RMIN)*rv
+        Rs = ((k+1.0f0)*DR + RMIN)*rv
 
-        vol = 4pi/3 * (Rs^3 - Ri^3)
-        Delta[k+1] = mass[k+1]/vol/MeanDen #- 1.0
-        NHalos[k+1] = NHalos[k+1]/vol/MEAN_NTRAC #- 1.0
+        vol = (4pi/3) * (Rs^3 - Ri^3)
+        Delta[k+1] = mass[k+1]/vol/MeanDen - 1.0
+        NHalos[k+1] = NHalos[k+1]/vol/MEAN_NTRAC - 1.0
 
-        vol = 4pi/3 * (Rs^3)
-        DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen #- 1.0
-        NHalosCum[k+1] = NHalosCum[k+1]/vol/MEAN_NTRAC #- 1.0
+        vol = (4pi/3) * (Rs^3)
+        DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen - 1.0
+        NHalosCum[k+1] = NHalosCum[k+1]/vol/MEAN_NTRAC - 1.0
     end
-
-    # rad = RMIN
-    # for i in 1:NBINS
-    #     tr = @views tcat[(tcat[:,end] .< (rad+DR)) .&& (tcat[:,end] .>= rad), :]
-    #     mass[i] = sum(10.0 .^ tr[:,1])
-    #     NTrac[i] = length(tr[:,1])
-
-    #     rad += DR
-    # end
-
-    # vol = 4pi/3*[(ri+DR)^3 - ri^3 for ri in range(RMIN,RMAX,NBINS)]
-    # volcum = 4pi/3*[(ri+DR)^3 - RMIN^3 for ri in range(RMIN,RMAX,NBINS)]
-    # Delta = (mass./vol)/MeanDen
-    # DeltaCum = (cumsum(mass)./volcum)/MeanDen
-    # NTracCum = cumsum(NTrac)./volcum/MEAN_NTRAC
-    # NTrac ./= vol/MEAN_NTRAC
 
     return Delta, DeltaCum, NHalos, NHalosCum
 end
@@ -203,7 +152,7 @@ Calcula todos los perfiles de las lentes seleccionadas
 """
 function radial_profile(RMIN, RMAX, NBINS, 
                         Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max,
-                        flag, lensname::String, tracname::String)
+                        flag, lensname, tracname)
     ## reading cats
     println("......................")
     println("Reading lenses...")
@@ -305,12 +254,12 @@ function test_profile(RMIN, RMAX, NBINS,
     println("rho2min....: $rho2_min")
     println("rho2max....: $rho2_max")
 
-    res = partial_profile(S, RMIN, RMAX, NBINS, L[1,2], L[1,5], L[1,6], L[1,7], L[1,8])
+    res = partial_profile.([S, S, S], RMIN, RMAX, NBINS, L[1:3,2], L[1:3,5], L[1:3,6], L[1:3,7], L[1:3,8])
 
-    Delta     = res[1]
-    DeltaCum  = res[2]
-    NHalos    = res[3]
-    NHalosCum = res[4]
+    Delta     = [res[1][1] res[2][1] res[3][1]]
+    DeltaCum  = [res[1][2] res[2][2] res[3][2]]
+    NHalos    = [res[1][3] res[2][3] res[3][3]]
+    NHalosCum = [res[1][4] res[2][4] res[3][4]]
     
     println("Done!")
 
@@ -318,7 +267,7 @@ function test_profile(RMIN, RMAX, NBINS,
     println("Saving...")
 
     open("test_profile.csv", "w") do io 
-        writedlm(io, [Delta DeltaCum NHalos NHalosCum], ',')
+        writedlm(io, [Delta DeltaCum NHalos NHalosCum], ',')    
     end
 
     println("Done!")
