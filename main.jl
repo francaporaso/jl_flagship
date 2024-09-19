@@ -18,9 +18,9 @@ const tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 # const MEANDENSITY = mean_den(0.0, 70, 0.3, 0.7)
 
 t = @elapsed begin
-    println("NTRACS.....: $NTRACS")
-    println("LBOX.......: $LBOX Mpc/h" )
-    println("MEAN_NTRAC.: $MEAN_NTRAC h/Mpc")
+    # println("NTRACS.....: $NTRACS")
+    # println("LBOX.......: $LBOX Mpc/h" )
+    # println("MEAN_NTRAC.: $MEAN_NTRAC h/Mpc")
 
     # addprocs(4)
 
