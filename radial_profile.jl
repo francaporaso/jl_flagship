@@ -222,10 +222,10 @@ function radial_profile(RMIN, RMAX, NBINS,
         Rho[:,i], RhoCum[:,i], NHalos[:,i], NHalosCum[:,i], MeanDen[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
-    Delta_stack = sum(Rho .-1, dims=2) / sum(MeanDen)
+    Delta_stack = sum(Rho, dims=2) / sum(MeanDen) .- 1.0
     # Delta_std  = std(Delta, dims=1)'/nvoids
     
-    DeltaCum_stack = sum(RhoCum .-1, dims=2) / sum(MeanDen)
+    DeltaCum_stack = sum(RhoCum, dims=2) / sum(MeanDen) .- 1.0
     # DeltaCum_std  = std(DeltaCum, dims=1)'/nvoids
 
     NHalos = sum(NHalos, dims=2) / nvoids
