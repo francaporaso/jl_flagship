@@ -128,7 +128,8 @@ function partial_profile(S::Matrix{Float32},
     
     mass_cum = cumsum(mass)
     NHalosCum = cumsum(NHalos)
-    MeanDen = mean_density_ball(tcat[:,1], rv, RMAX)
+    # MeanDen = mean_density_ball(tcat[:,1], rv, RMAX)
+    MeanDen = mean_density_universe(z)
 
     for k in 0:NBINS-1
         Ri = (k*DR + RMIN)*rv
