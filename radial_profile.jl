@@ -241,7 +241,11 @@ function radial_profile(RMIN, RMAX, NBINS,
     end
 
     open("pru_individual.csv", "w") do io 
-        writedlm(io, [Rho RhoCum MeanDen], ',')
+        writedlm(io, [Rho RhoCum], ',')
+    end
+
+    open("pru_meanden.csv", "w") do io 
+        writedlm(io, MeanDen, ',')
     end
 
     println("Done!")
