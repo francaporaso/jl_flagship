@@ -65,10 +65,11 @@ function test_box()
 
     # densidad media de cada void en bola al rededor del centro hasta RMAX
     println("calculando densidades en la bola")
-    ρ = zeros(nvoids)
-    @threads for i in 1:nvoids
-        ρ[i] = mean_density_box(tr[i][:,1], L[i,2], RMAX)
-    end
+    # ρ = zeros(nvoids)
+    # @threads for i in 1:nvoids
+    #     ρ[i] = mean_density_box(tr[i][:,1], L[i,2], RMAX)
+    # end
+    ρ = mean_density_box.(tr[:][:,1], L[!,2], RMAX)
 
     # densidad media teorica
     println("calculado den media teorica")
@@ -109,10 +110,6 @@ function test_comoving_shell()
     # densidad media teorica
     println("calculado den media teorica")
     ρ_universe = mean_density.(L[!,5])
-
-    # if ρ ./ ρ_universe .<= 10.0
-    #     println("DAN IGUAL!, TEST APROBADO")
-    # end
 
     println("guardando")
     open("den_comovingshell_test.csv", "w") do io
