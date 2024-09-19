@@ -8,39 +8,57 @@ include("radial_profile.jl")
 #     mass = sum(10.0 .^ logm)
 #     vol = (4pi/3) * (RMAX*rv)^3
 #     return mass/vol
+# # end
+
+# function get_tracers_z(z_min, z_max, xv, yv, zv; 
+#     tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits")
+
+#     tcat = Matrix(DataFrame(FITS(tracname)[2])) ## FITS lee .fits; DataFrame transforma en tabla
+#     ## tcat[1] = id
+#     ## tcat[2] = flagcentral
+#     ## tcat[3] = lmhalo
+#     ## tcat[4] = xhalo
+#     ## tcat[5] = yhalo
+#     ## tcat[6] = zhalo
+
+#     trac_list = Array{Float64}(undef, 0)
+
+#     ### Máscara en una cáscara esférica con centro (xv,yv,zv) y radios comoving_radial_dist(z_min),comoving_radial_dist(z_min) 
+#     cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
+#     distance = @views @. sqrt((tcat[:,4] - xv)^2 + (tcat[:,5] - yv)^2 + (tcat[:,6] - zv)^2)
+#     m1 = distance .< ustrip(comoving_radial_dist(cosmo, z_max))
+#     m2 = distance .> ustrip(comoving_radial_dist(cosmo, z_min))
+
+#     trac_list = vcat(tcat[m1 .&& m2, 3])
+
+#     return trac_list
 # end
 
-function get_tracers_z(z_min, z_max, xv, yv, zv; 
-    tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits")
-
-    tcat = Matrix(DataFrame(FITS(tracname)[2])) ## FITS lee .fits; DataFrame transforma en tabla
-    ## tcat[1] = id
-    ## tcat[2] = flagcentral
-    ## tcat[3] = lmhalo
-    ## tcat[4] = xhalo
-    ## tcat[5] = yhalo
-    ## tcat[6] = zhalo
-
-    trac_list = Array{Float64}(undef, 0)
-
-    ### Máscara en una cáscara esférica con centro (xv,yv,zv) y radios comoving_radial_dist(z_min),comoving_radial_dist(z_min) 
-    cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
-    distance = @views @. sqrt((tcat[:,4] - xv)^2 + (tcat[:,5] - yv)^2 + (tcat[:,6] - zv)^2)
-    m1 = distance .< ustrip(comoving_radial_dist(cosmo, z_max))
-    m2 = distance .> ustrip(comoving_radial_dist(cosmo, z_min))
-
-    trac_list = vcat(tcat[m1 .&& m2, 3])
-
-    return trac_list
-end
-
-function mean_density_comovilshell(z_min, z_max;
-                                   tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits")
+# function mean_density_comovilshell(z_min, z_max;
+#                                    tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits")
     
-    cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
-    vol = (1/8)*(4pi/3)*(ustrip(comoving_radial_dist(cosmo, z_max))^3 - ustrip(comoving_radial_dist(cosmo, z_min))^3)
-    halos = get_tracers_z(z_min, z_max, 0.0, 0.0, 0.0, tracname=tracname)
-    mass = sum(10.0 .^ halos)
+#     cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
+#     vol = (1/8)*(4pi/3)*(ustrip(comoving_radial_dist(cosmo, z_max))^3 - ustrip(comoving_radial_dist(cosmo, z_min))^3)
+#     halos = get_tracers_z(z_min, z_max, 0.0, 0.0, 0.0, tracname=tracname)
+#     mass = sum(10.0 .^ halos)
+
+#     return mass/vol
+# end
+
+
+function mean_density_comovilshell(S,
+                                   xv, yv, zv, rv, RMAX)
+    
+    # cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
+    χ_min = sqrt(xv^2 + yv^2 + zv^2) - RMAX*rv
+    χ_max = sqrt(xv^2 + yv^2 + zv^2) + RMAX*rv
+
+    m1 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) > χ_min
+    m2 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) < χ_max
+    logm = S[m1 .&& m2, end]
+    
+    vol = (1/8)*(4pi/3)*(χ_max^3 - χ_min^3)
+    mass = sum(10.0 .^ logm)
 
     return mass/vol
 end
