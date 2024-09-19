@@ -126,6 +126,8 @@ function partial_profile(tcat::Matrix{Float64},
                         RMIN::Float64, RMAX::Float64, NBINS::Int64,
                         rv::Float64, z::Float64)
     
+    ### tcat[:,1] = logm
+    ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
 
     NTrac = zeros(NBINS)
     mass = zeros(NBINS)
@@ -146,7 +148,7 @@ function partial_profile(tcat::Matrix{Float64},
     
     mass_cum = cumsum(mass)
     NTracCum = cumsum(NTrac)
-    MeanDen = mean_density(z)
+    MeanDen = mean_density_ball(tcat[:,1], rv, RMAX)
 
     for k in 0:NBINS-1
         Ri = (k*DR + RMIN)*rv
