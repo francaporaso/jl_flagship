@@ -305,12 +305,12 @@ function test_profile(RMIN, RMAX, NBINS,
     println("rho2min....: $rho2_min")
     println("rho2max....: $rho2_max")
 
-    Delta   = zeros(NBINS)
-    DeltaCum = zeros(NBINS)
-    NHalos = zeros(NBINS)
-    NHalosCum = zeros(NBINS)
+    res = partial_profile(S, RMIN, RMAX, NBINS, L[1,2], L[1,5], L[1,6], L[1,7], L[1,8])
 
-    Delta, DeltaCum, NHalos, NHalosCum = partial_profile(S, RMIN, RMAX, NBINS, L[1,2], L[1,5], L[1,6], L[1,7], L[1,8])
+    Delta     = res[1]
+    DeltaCum  = res[2]
+    NHalos    = res[3]
+    NHalosCum = res[4]
     
     println("Done!")
 
