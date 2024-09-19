@@ -310,7 +310,7 @@ function test_profile(RMIN, RMAX, NBINS,
     NHalos = zeros(NBINS)
     NHalosCum = zeros(NBINS)
 
-    Delta, DeltaCum, NHalos, NHalosCum .= partial_profile(S, RMIN, RMAX, NBINS, L[1,2], L[1,5], L[1,6], L[1,7], L[1,8])
+    Delta, DeltaCum, NHalos, NHalosCum = partial_profile(S, RMIN, RMAX, NBINS, L[1,2], L[1,5], L[1,6], L[1,7], L[1,8])
     
     println("Done!")
 
