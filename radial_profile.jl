@@ -32,18 +32,18 @@ the observer between √(xᵥ+yᵥ+zᵥ)-RMAX*rv and √(xᵥ+yᵥ+zᵥ)-RMAX*rv
 function mean_density_comovilshell(S, RMAX,
                                    rv, xv, yv, zv)
 
-# cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
-χ_min = sqrt(xv^2 + yv^2 + zv^2) - RMAX*rv
-χ_max = sqrt(xv^2 + yv^2 + zv^2) + RMAX*rv
+    # cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
+    χ_min = sqrt(xv^2 + yv^2 + zv^2) - RMAX*rv
+    χ_max = sqrt(xv^2 + yv^2 + zv^2) + RMAX*rv
 
-m1 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) > χ_min
-m2 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) < χ_max
-logm = S[m1 .&& m2, end]
+    m1 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) > χ_min
+    m2 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) < χ_max
+    logm = S[m1 .&& m2, end]
 
-vol = (1/8)*(4pi/3)*(χ_max^3 - χ_min^3)
-mass = sum(10.0 .^ logm)
+    vol = (1/8)*(4pi/3)*(χ_max^3 - χ_min^3)
+    mass = sum(10.0 .^ logm)
 
-return mass/vol
+    return mass/vol
 end
 
 """
@@ -135,8 +135,8 @@ function partial_profile(S::Matrix{Float32},
 
     NHalos   = zeros(NBINS)
     mass     = zeros(NBINS)
-    Delta    = zeros(NBINS)
-    DeltaCum = zeros(NBINS)
+    Rho    = zeros(NBINS)
+    RhoCum = zeros(NBINS)
  
     ### calculamos el bin al que corresponde cada particula y sumando en el array 
     ### que corresponde (masa o halo)
@@ -160,15 +160,19 @@ function partial_profile(S::Matrix{Float32},
         Rs = ((k+1.0f0)*DR + RMIN)*rv
 
         vol = (4pi/3) * (Rs^3 - Ri^3)
-        Delta[k+1] = mass[k+1]/vol/MeanDen - 1.0
-        NHalos[k+1] = NHalos[k+1]/vol/MEAN_NTRAC - 1.0
+        # Delta[k+1] = mass[k+1]/vol/MeanDen - 1.0
+        # NHalos[k+1] = NHalos[k+1]/vol/MEAN_NTRAC - 1.0
+        Rho[k+1] = mass[k+1]/vol
+        NHalos[k+1] = NHalos[k+1]/vol
 
         vol = (4pi/3) * (Rs^3)
-        DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen - 1.0
-        NHalosCum[k+1] = NHalosCum[k+1]/vol/MEAN_NTRAC - 1.0
+        # DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen - 1.0
+        # NHalosCum[k+1] = NHalosCum[k+1]/vol/MEAN_NTRAC - 1.0
+        RhoCum[k+1] = mass_cum[k+1]/vol
+        NHalosCum[k+1] = NHalosCum[k+1]/vol
     end
 
-    return Delta, DeltaCum, NHalos, NHalosCum
+    return Rho, RhoCum, NHalos, NHalosCum, MeanDen
 end
 
 """
@@ -280,10 +284,14 @@ function test_profile(RMIN, RMAX, NBINS,
 
     res = partial_profile.([S, S, S], RMIN, RMAX, NBINS, L[1:3,2], L[1:3,5], L[1:3,6], L[1:3,7], L[1:3,8])
 
-    Delta     = [res[1][1] res[2][1] res[3][1]]
-    DeltaCum  = [res[1][2] res[2][2] res[3][2]]
+    Rho     = [res[1][1] res[2][1] res[3][1]]
+    RhoCum  = [res[1][2] res[2][2] res[3][2]]
     NHalos    = [res[1][3] res[2][3] res[3][3]]
     NHalosCum = [res[1][4] res[2][4] res[3][4]]
+    MeanDen = [res[1][5] res[2][5] res[3][5]]
+
+    Delta = sum(Rho, dims=2)/sum(MeanDen, dims=2) - 1.0
+    DeltaCum = sum(RhoCum, dims=2)/sum(MeanDen, dims=2) - 1.0
     
     println("Done!")
 
