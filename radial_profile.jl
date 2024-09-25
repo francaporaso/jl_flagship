@@ -47,6 +47,27 @@ function mean_density_comovilshell(S, RMAX,
 end
 
 """
+Total mass in a comoving shell and its volume centered in
+the observer between √(xᵥ+yᵥ+zᵥ)-RMAX*rv and √(xᵥ+yᵥ+zᵥ)-RMAX*rv.
+Mass in [Msun / h] and volume in [Rv^3]
+"""
+function mass_comovingshell(S, RMAX,
+                           rv, xv, yv, zv)
+
+    # cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
+    χ_min = sqrt(xv^2 + yv^2 + zv^2) - RMAX*rv
+    χ_max = sqrt(xv^2 + yv^2 + zv^2) + RMAX*rv
+
+    m1 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) > χ_min
+    m2 = @. sqrt(S[:,2]^2 + S[:,3]^2 + S[:,4]^2) < χ_max
+    logm = S[m1 .&& m2, end]
+
+    mass = sum(10.0 .^ logm)
+    vol = 1/8 * (4pi/3)*(χ_max^3 - χ_min^3)/rv^3
+    return mass, vol
+end
+
+"""
 Loads the lenses catalog
 """
 function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max; 
@@ -124,7 +145,7 @@ end
 """
 Calcula el perfil de 1 void dados los halos S
 """
-function partial_profile(S::Matrix{Float32}, 
+function individual_profile(S::Matrix{Float32}, 
                          RMIN, RMAX, NBINS,
                          rv, z, xv, yv, zv)
     
@@ -135,8 +156,8 @@ function partial_profile(S::Matrix{Float32},
 
     NHalos   = zeros(NBINS)
     mass     = zeros(NBINS)
-    Rho    = zeros(NBINS)
-    RhoCum = zeros(NBINS)
+    Delta    = zeros(NBINS)
+    DeltaCum = zeros(NBINS)
  
     ### calculamos el bin al que corresponde cada particula y sumando en el array 
     ### que corresponde (masa o halo)
@@ -153,31 +174,59 @@ function partial_profile(S::Matrix{Float32},
     mass_cum = cumsum(mass)
     NHalosCum = cumsum(NHalos)
     # MeanDen = mean_density_ball(tcat[:,1], rv, RMAX)
-    return mass, mass_cum, NHalos, NHalosCum, MeanDen
+    # return mass, mass_cum, NHalos, NHalosCum, MeanDen
 
-    # for k in 0:NBINS-1
-    #     Ri = (k*DR + RMIN)*rv
-    #     # Rm = ((k+0.5)*DR + RMIN)*rv
-    #     Rs = ((k+1.0f0)*DR + RMIN)*rv
+    for k in 0:NBINS-1
+        Ri = (k*DR + RMIN)*rv
+        # Rm = ((k+0.5)*DR + RMIN)*rv
+        Rs = ((k+1.0f0)*DR + RMIN)*rv
 
-    #     vol = (4pi/3) * (Rs^3 - Ri^3)
-    #     # Delta[k+1] = mass[k+1]/vol/MeanDen - 1.0
-    #     # NHalos[k+1] = NHalos[k+1]/vol/MEAN_NTRAC - 1.0
-    #     Rho[k+1] = mass[k+1]/vol
-    #     NHalos[k+1] = NHalos[k+1]/vol/MeanNTrac - 1.0
+        vol = (4pi/3) * (Rs^3 - Ri^3)
+        Delta[k+1] = mass[k+1]/vol/MeanDen - 1.0
+        NHalos[k+1] = NHalos[k+1]/vol/MeanNTrac - 1.0
+        
+        vol = (4pi/3) * (Rs^3)
+        DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen - 1.0
+        NHalosCum[k+1] = NHalosCum[k+1]/vol/MeanNTrac - 1.0
+    end
 
-    #     vol = (4pi/3) * (Rs^3)
-    #     # DeltaCum[k+1] = mass_cum[k+1]/vol/MeanDen - 1.0
-    #     # NHalosCum[k+1] = NHalosCum[k+1]/vol/MEAN_NTRAC - 1.0
-    #     RhoCum[k+1] = mass_cum[k+1]/vol
-    #     NHalosCum[k+1] = NHalosCum[k+1]/vol/MeanNTrac - 1.0
-    # end
-
-    # return Rho, RhoCum, NHalos, NHalosCum, MeanDen
+    return Delta, DeltaCum, NHalos, NHalosCum, MeanDen
 end
 
 """
-Calcula todos los perfiles de las lentes seleccionadas
+Perfil parcial, masa en el void y masa en la cáscara comóvil de 1 void.
+Para ser usada con stacking únicamente
+"""
+function partial_profile(S::Matrix{Float32}, 
+                         RMIN, RMAX, NBINS,
+                         rv, z, xv, yv, zv)
+    
+    ### tcat[:,1] = logm
+    ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
+    tcat = get_halos(S, RMIN, RMAX, NBINS, rv, xv, yv, zv)
+    MassComoving, VolComoving = mass_comovingshell(S, RMAX, rv, xv, yv, zv)
+
+    NHalos = zeros(NBINS)
+    mass   = zeros(NBINS)
+ 
+    ### calculamos el bin al que corresponde cada particula y sumando en el array 
+    ### que corresponde (masa o halo)
+    DR = (RMAX-RMIN)/NBINS
+
+    for t in 1:size(tcat)[1]
+        if (tcat[t,2] >= RMIN) && (tcat[t,2] <= RMAX)   
+            ibin = ceil(Int32, (tcat[t,2] - RMIN)/DR)
+            NHalos[ibin] += 1.0
+            mass[ibin]   += 10.0 ^ tcat[t,1]
+        end
+    end
+    
+    return mass, NHalos, MassComoving, VolComoving
+end
+
+
+"""
+Calcula el perfil stackeado de las lentes seleccionadas.
 """
 function radial_profile(RMIN, RMAX, NBINS, 
                         Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max,
@@ -213,105 +262,46 @@ function radial_profile(RMIN, RMAX, NBINS,
     println("rho2min....: $rho2_min")
     println("rho2max....: $rho2_max")
 
-    Rho   = zeros(NBINS, nvoids)
-    RhoCum = zeros(NBINS, nvoids)
+    DR = (RMAX-RMIN)/NBINS
+    
+    mass   = zeros(NBINS, nvoids)
     NHalos = zeros(NBINS, nvoids)
-    NHalosCum = zeros(NBINS, nvoids)
-    MeanDen = zeros(nvoids)
+    MassComoving = zeros(nvoids)
+    VolComoving = zeros(nvoids)
 
     @threads for i in 1:nvoids
-        Rho[:,i], RhoCum[:,i], NHalos[:,i], NHalosCum[:,i], MeanDen[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
+        mass[:,i], NHalos[:,i], MassComoving[i], VolComoving[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
-    Delta_stack = sum(Rho, dims=2) / sum(MeanDen) .- 1.0
-    # Delta_std  = std(Delta, dims=1)'/nvoids
-    sum(MeanDen)
-    DeltaCum_stack = sum(RhoCum, dims=2) / sum(MeanDen) .- 1.0
-    # DeltaCum_std  = std(DeltaCum, dims=1)'/nvoids
+    TotMass = sum(mass, dims=2)
+    VoidVol = zeros(NBINS)
+    for k in 0:NBINS-1
+        vol[k+1] = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
+    end
 
-    NHalos = sum(NHalos, dims=2) / nvoids
-    NHalosCum = sum(NHalosCum, dims=2) / nvoids
-    # NHalos_std = std(Nhalos, dims=2) / nvoids
+    MeanDen = sum(MassComoving)/sum(VolComoving)
+
+    Delta = TotMass./VoidVol./MeanDen .- 1.0
+    DeltaCum = cumsum(TotMass)./VoidVol./MeanDen .- 1.0
+    DenHalos = NHalos./VoidVol
+    DenHalosCum = cumsum(NHalos)./VoidVol
+
     println("Done!")
 
     println("......................")
     println("Saving...")
 
     open("pru_stack.csv", "w") do io 
-        writedlm(io, [Delta_stack DeltaCum_stack NHalos NHalosCum], ',')
+        writedlm(io, [Delta DeltaCum DenHalos DenHalosCum], ',')
     end
 
-    open("pru_individual.csv", "w") do io 
-        writedlm(io, [Rho RhoCum], ',')
-    end
+    # open("pru_individual.csv", "w") do io 
+    #     writedlm(io, [Rho RhoCum], ',')
+    # end
 
-    open("pru_meanden.csv", "w") do io 
-        writedlm(io, MeanDen, ',')
-    end
-
-    println("Done!")
-    println("......................")
-end
-
-"""
-Calcula todos los perfiles de las lentes seleccionadas
-"""
-function test_profile(RMIN, RMAX, NBINS, 
-                        Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max,
-                        flag, lensname::String, tracname::String)
-    ## reading cats
-    println("......................")
-    println("Reading lenses...")
-    L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag=flag, lensname=lensname)
-
-    nvoids = nrow(L)
-    println("Nvoids.....: $nvoids")
-    println("Done!")
-
-    println("......................")
-    println("Reading halos...")
-    S = traccat_load(z_min, z_max, tracname=tracname)
-    println("Done!")
-    
-    println("......................")
-    println("Calculating profile...")
-
-    println("RMIN.......: $RMIN")
-    println("RMAX.......: $RMAX")
-    println("NBINS......: $NBINS")
-
-    println("......................")
-    println("Rvmin......: $Rv_min Mpc")
-    println("Rvmax......: $Rv_max Mpc")
-    println("zmin.......: $z_min")
-    println("zmax.......: $z_max")
-    println("rho1min....: $rho1_min")
-    println("rho1max....: $rho1_max")
-    println("rho2min....: $rho2_min")
-    println("rho2max....: $rho2_max")
-    
-    mass   = zeros(NBINS, nvoids)
-    massCum = zeros(NBINS, nvoids)
-    NHalos = zeros(NBINS, nvoids)
-    NHalosCum = zeros(NBINS, nvoids)
-    MeanDen = zeros(nvoids)
-
-    @threads for i in 1:nvoids
-        mass[:,i], massCum[:,i], NHalos[:,i], NHalosCum[:,i], MeanDen[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
-    end
-    
-    println("Done!")
-
-    println("......................")
-    println("Saving...")
-
-    open("test_massprofile.csv", "w") do io 
-        writedlm(io, [mass massCum NHalos NHalosCum], ',')    
-    end
-
-    open("test_meanden.csv", "w") do io 
-        writedlm(io, MeanDen, ',')    
-    end
+    # open("pru_meanden.csv", "w") do io 
+    #     writedlm(io, MeanDen, ',')
+    # end
 
     println("Done!")
     println("......................")
