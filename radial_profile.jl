@@ -273,7 +273,7 @@ function radial_profile(RMIN, RMAX, NBINS,
         mass[:,i], NHalos[:,i], MassComoving[i], VolComoving[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
-    TotMass = sum(mass, dims=2)
+    # TotMass = vec(sum(mass, dims=2))
     VoidVol = zeros(NBINS)
     for k in 0:NBINS-1
         VoidVol[k+1] = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
@@ -281,10 +281,10 @@ function radial_profile(RMIN, RMAX, NBINS,
 
     MeanDen = sum(MassComoving)/sum(VolComoving)
 
-    Delta = TotMass./VoidVol./MeanDen .- 1.0
-    DeltaCum = cumsum(TotMass)./VoidVol./MeanDen .- 1.0
+    Delta = vec(sum(mass, dims=2))./VoidVol./MeanDen .- 1.0
+    DeltaCum = cumsum(vec(sum(mass, dims=2)))./VoidVol./MeanDen .- 1.0
     DenHalos = NHalos./VoidVol
-    DenHalosCum = cumsum(NHalos)./VoidVol
+    DenHalosCum = cumsum(vec(sum(NHalos,dims=2)))./VoidVol
 
     println("Done!")
 
