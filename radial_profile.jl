@@ -28,8 +28,8 @@ end
 """
 Total mass in a ball centered in rv and radius RMAX, in [Msun / h]
 """
-function mass_ball(S, RMAX, NBINS, rv, xv, yv, zv)
-    mass = sum(10.0 .^ get_halos(S, 0.0, RMAX, NBINS, rv, xv, yv, zv)[:,1])
+function mass_ball(S, RMAX, rv, xv, yv, zv)
+    mass = sum(10.0 .^ get_halos(S, 0.0, RMAX, rv, xv, yv, zv)[:,1])
     return mass
 end
 
@@ -134,7 +134,7 @@ Dado un sólo centro (xv,yv,zv) y su radio rv, encuentra los halos
 al rededor del centro entre RMIN*rv hasta RMAX*rv
 """
 function get_halos(S::Matrix{Float32},
-                   RMIN, RMAX, NBINS,
+                   RMIN, RMAX,
                    rv, xv, yv, zv)
 
 
@@ -159,7 +159,7 @@ function individual_profile(S::Matrix{Float32},
     
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
-    tcat = get_halos(S, RMIN, RMAX, NBINS, rv, xv, yv, zv)
+    tcat = get_halos(S, RMIN, RMAX, rv, xv, yv, zv)
     MeanDen, MeanNTrac = mean_density_comovilshell(S, RMAX, rv, xv, yv, zv)
 
     NHalos   = zeros(NBINS)
@@ -187,7 +187,7 @@ function individual_profile(S::Matrix{Float32},
     for k in 0:NBINS-1
         Ri = (k*DR + RMIN)*rv
         # Rm = ((k+0.5)*DR + RMIN)*rv
-        Rs = ((k+1.0f0)*DR + RMIN)*rv
+        Rs = ((k+1.0)*DR + RMIN)*rv
 
         vol = (4pi/3) * (Rs^3 - Ri^3)
         Delta[k+1] = mass[k+1]/vol/MeanDen - 1.0
@@ -211,8 +211,8 @@ function partial_profile(S::Matrix{Float32},
     
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
-    tcat = get_halos(S, RMIN, RMAX, NBINS, rv, xv, yv, zv)
-    MassBall= mass_ball(S, 2RMAX, NBINS, rv, xv, yv, zv)
+    tcat = get_halos(S, RMIN, RMAX, rv, xv, yv, zv)
+    MassBall = mass_ball(S, 2RMAX, rv, xv, yv, zv)
 
     NHalos = zeros(NBINS)
     mass   = zeros(NBINS)
@@ -279,18 +279,21 @@ function radial_profile(RMIN, RMAX, NBINS,
         mass[:,i], NHalos[:,i], MassBall[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
-    # TotMass = vec(sum(mass, dims=2))
-    VoidVol = zeros(NBINS)
+    Vol = zeros(NBINS)
+    VolCum = zeros(NBINS)
     for k in 0:NBINS-1
-        VoidVol[k+1] = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
+        Vol[k+1] = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
+        VolCum[k+1] = (4pi/3) * ((k+1.0)*DR + RMIN)^3
     end
 
     MeanDen = sum(MassBall)/((4pi/3) * (2RMAX)^3)
+    TotMass = vec(sum(mass, dims=2))
+    TotNHalos = vec(sum(NHalos, dims=2))
 
-    Delta = vec(sum(mass, dims=2))./VoidVol./MeanDen .- 1.0
-    DeltaCum = cumsum(vec(sum(mass, dims=2)))./VoidVol./MeanDen .- 1.0
-    DenHalos = vec(sum(NHalos,dims=2))./VoidVol
-    DenHalosCum = cumsum(vec(sum(NHalos,dims=2)))./VoidVol
+    Delta = TotMass./Vol./MeanDen .- 1.0
+    DeltaCum = cumsum(TotMass)./VolCum./MeanDen .- 1.0
+    DenHalos = TotNHalos./Vol
+    DenHalosCum = cumsum(TotNHalos)./VolCum
 
     println("Done!")
 
