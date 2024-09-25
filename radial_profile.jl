@@ -193,7 +193,7 @@ function individual_profile(S::Matrix{Float32},
     return Delta, DeltaCum, NHalos, NHalosCum, MeanDen
 end
 
-"""
+""" 
 Perfil parcial, masa en el void y masa en la cáscara comóvil de 1 void.
 Para ser usada con stacking únicamente
 """
