@@ -26,6 +26,14 @@ function mean_density_ball(logm, rv, RMAX)
 end
 
 """
+Total mass in a ball centered in rv and radius RMAX, in [Msun / h]
+"""
+function mass_ball(S, RMAX, NBINS, rv, xv, yv, zv)
+    mass = sum(10.0 ^ get_halos(S, 0.0, RMAX, NBINS, rv, xv, yv, zv)[:,1])
+    return mass
+end
+
+"""
 Mean density in a comoving shell centered in
 the observer between √(xᵥ+yᵥ+zᵥ)-RMAX*rv and √(xᵥ+yᵥ+zᵥ)-RMAX*rv , in [Msun h^2 / Mpc^3]
 """
@@ -204,7 +212,7 @@ function partial_profile(S::Matrix{Float32},
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
     tcat = get_halos(S, RMIN, RMAX, NBINS, rv, xv, yv, zv)
-    MassComoving, VolComoving = mass_comovingshell(S, RMAX, rv, xv, yv, zv)
+    MassBall= mass_ball(S, 2RMAX, NBINS, rv, xv, yv, zv)
 
     NHalos = zeros(NBINS)
     mass   = zeros(NBINS)
@@ -221,9 +229,8 @@ function partial_profile(S::Matrix{Float32},
         end
     end
     
-    return mass, NHalos, MassComoving, VolComoving
+    return mass, NHalos, MassBall
 end
-
 
 """
 Calcula el perfil stackeado de las lentes seleccionadas.
@@ -266,11 +273,10 @@ function radial_profile(RMIN, RMAX, NBINS,
     
     mass   = zeros(NBINS, nvoids)
     NHalos = zeros(NBINS, nvoids)
-    MassComoving = zeros(nvoids)
-    VolComoving = zeros(nvoids)
+    MassBall = zeros(nvoids)
 
     @threads for i in 1:nvoids
-        mass[:,i], NHalos[:,i], MassComoving[i], VolComoving[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
+        mass[:,i], NHalos[:,i], MassBall[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
     # TotMass = vec(sum(mass, dims=2))
@@ -279,11 +285,11 @@ function radial_profile(RMIN, RMAX, NBINS,
         VoidVol[k+1] = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
     end
 
-    MeanDen = sum(MassComoving)/sum(VolComoving)
+    MeanDen = sum(MassBall)/((4pi/3) * (2RMAX)^3)
 
     Delta = vec(sum(mass, dims=2))./VoidVol./MeanDen .- 1.0
     DeltaCum = cumsum(vec(sum(mass, dims=2)))./VoidVol./MeanDen .- 1.0
-    DenHalos = NHalos./VoidVol
+    DenHalos = vec(sum(NHalos,dims=2))./VoidVol
     DenHalosCum = cumsum(vec(sum(NHalos,dims=2)))./VoidVol
 
     println("Done!")
