@@ -29,7 +29,7 @@ end
 Total mass in a ball centered in rv and radius RMAX, in [Msun / h]
 """
 function mass_ball(S, RMAX, NBINS, rv, xv, yv, zv)
-    mass = sum(10.0 ^ get_halos(S, 0.0, RMAX, NBINS, rv, xv, yv, zv)[:,1])
+    mass = sum(10.0 .^ get_halos(S, 0.0, RMAX, NBINS, rv, xv, yv, zv)[:,1])
     return mass
 end
 
