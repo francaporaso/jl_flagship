@@ -276,7 +276,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     TotMass = sum(mass, dims=2)
     VoidVol = zeros(NBINS)
     for k in 0:NBINS-1
-        vol[k+1] = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
+        VoidVol[k+1] = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
     end
 
     MeanDen = sum(MassComoving)/sum(VolComoving)
