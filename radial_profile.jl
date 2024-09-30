@@ -285,7 +285,6 @@ function radial_profile(RMIN, RMAX, NBINS,
     NHalos = zeros(NBINS)
     MassBall  = 0.0
     HalosBall = 0.0
-
     for i in 1:nvoids
         res = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
 
@@ -294,24 +293,34 @@ function radial_profile(RMIN, RMAX, NBINS,
         MassBall  += res[3]
         HalosBall += res[4]
     end
+
+    MeanDen = MassBall/(4pi/3 * (2RMAX)^3)
+    MeanHalos = HalosBall/(4pi/3 * (2RMAX)^3)
     
-    Vol = zeros(NBINS)
-    VolCum = zeros(NBINS)
+    Delta    = zeros(NBINS)
+    DeltaCum = zeros(NBINS)
+    DenHalos = zeros(NBINS)
+    DenHalosCum = zeros(NBINS)
     for k in 0:NBINS-1
-        Vol[k+1] = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
-        VolCum[k+1] = (4pi/3) * ((k+1.0)*DR + RMIN)^3
+        Vol = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
+        Delta[k+1] = (mass[k+1]/Vol)/MeanDen - 1
+        DenHalos[k+1] = (NHalos[k+1]/Vol)/MeanHalos
+
+        Vol = (4pi/3) * ((k+1.0)*DR + RMIN)^3
+        DeltaCum[k+1] = (sum(mass[1:k+1])/Vol)/MeanDen - 1
+        DenHalosCum[k+1] = (sum(NHalos[1:k+1])/Vol)/MeanHalos
     end
 
     ## TODO no funca...
-    Delta = (mass./Vol) / (MassBall/(4pi/3 * (2RMAX)^3)) .- 1 
-    DeltaCum = (cumsum(mass)./VolCum) / (MassBall/(4pi/3 * (2RMAX)^3)) .- 1 
-    DenHalos = (NHalos./Vol) / (MassBall/(4pi/3 * (2RMAX)^3))
-    DenHalosCum = (cumsum(mass)./VolCum) / (HalosBall/(4pi/3 * (2RMAX)^3))
+    # Delta = (mass./Vol) / (MassBall/(4pi/3 * (2RMAX)^3)) .- 1 
+    # DeltaCum = (cumsum(mass)./VolCum) / (MassBall/(4pi/3 * (2RMAX)^3)) .- 1 
+    # DenHalos = (NHalos./Vol) / (MassBall/(4pi/3 * (2RMAX)^3))
+    # DenHalosCum = (cumsum(mass)./VolCum) / (HalosBall/(4pi/3 * (2RMAX)^3))
     
     println("Done!")
 
     println("......................")
-    println("Saving...")
+    println("Saving...")    
 
     open("pru_stack.csv", "w") do io 
         writedlm(io, [Delta DeltaCum DenHalos DenHalosCum], ',')
