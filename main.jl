@@ -12,7 +12,7 @@ const tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 
 t = @elapsed begin
     # radial_profile(RMIN, RMAX, NBINS, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
-    calculate_all_indiv(RMIN, RMAX, NBINS, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
+    @threads calculate_all_indiv(RMIN, RMAX, NBINS, Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag, lensname, tracname)
 end
 
 t /= 60.0
