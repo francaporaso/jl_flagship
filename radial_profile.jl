@@ -19,8 +19,9 @@ end
 """
 Mean density in a ball centered in rv and radius RMAX*rv, in [Msun h^2 / Mpc^3]
 """
-function mean_density_ball(logm, rv, RMAX)
-    mass = sum(10.0 .^ logm)
+function mean_density_ball(S, RMAX, rv, xv, yv, zv)
+    halos = get_halos(S, 0.0, RMAX, rv, xv, yv, zv)
+    mass = sum(10.0 .^ halos[:,1])    
     vol = (4pi/3) * (RMAX*rv)^3
     return mass/vol
 end
@@ -38,7 +39,7 @@ end
 Mean density in a comoving shell centered in
 the observer between √(xᵥ+yᵥ+zᵥ)-RMAX*rv and √(xᵥ+yᵥ+zᵥ)-RMAX*rv , in [Msun h^2 / Mpc^3]
 """
-function mean_density_comovilshell(S, RMAX,
+function mean_density_comovingshell(S, RMAX,
                                    rv, xv, yv, zv)
 
     # cosmo = cosmology(h=1, OmegaM=0.25, Tcmb=0.0)
@@ -138,15 +139,12 @@ function get_halos(S::Matrix{Float32},
                    RMIN, RMAX,
                    rv, xv, yv, zv)
 
-
-    halos_list = Matrix{Float64}(undef,0,2)
-
     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+2DR)RMAX*rv
     distance = @views @. sqrt((S[:,1] - xv)^2 + (S[:,2] - yv)^2 + (S[:,3] - zv)^2)/rv
     m1 = distance .< RMAX
     m2 = distance .> RMIN
 
-    halos_list = vcat(halos_list, hcat(S[m1 .&& m2, end], distance[m1 .&& m2]))
+    halos_list = hcat(S[m1 .&& m2, end], distance[m1 .&& m2])
 
     return halos_list
 end
@@ -294,6 +292,12 @@ function radial_profile(RMIN, RMAX, NBINS,
         HalosBall += res[4]
     end
 
+    masscum = cumsum(mass)
+    NHalosCum = cumsum(NHalos)
+
+    ## TODO probar con den en comoving shell...
+    ## diferencia con ball de 1 orden de mag...
+    ## igual la curva no va a cambiar, solo los valores
     MeanDen = MassBall/(4pi/3 * (2RMAX)^3)
     MeanHalos = HalosBall/(4pi/3 * (2RMAX)^3)
     
@@ -301,21 +305,15 @@ function radial_profile(RMIN, RMAX, NBINS,
     DeltaCum = zeros(NBINS)
     DenHalos = zeros(NBINS)
     DenHalosCum = zeros(NBINS)
-    for k in 0:NBINS-1
-        Vol = (4pi/3) * (((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)
-        Delta[k+1] = (mass[k+1]/Vol)/MeanDen - 1
-        DenHalos[k+1] = (NHalos[k+1]/Vol)/MeanHalos
+    for k in 1:NBINS
+        Vol = (4pi/3) * ((k*DR + RMIN)^3 - ((k-1.0)*DR + RMIN)^3)
+        Delta[k] = (mass[k]/Vol)/MeanDen - 1.0
+        DenHalos[k] = (NHalos[k]/Vol)/MeanHalos
 
-        Vol = (4pi/3) * ((k+1.0)*DR + RMIN)^3
-        DeltaCum[k+1] = (sum(mass[1:k+1])/Vol)/MeanDen - 1
-        DenHalosCum[k+1] = (sum(NHalos[1:k+1])/Vol)/MeanHalos
+        Vol = (4pi/3) * (k*DR + RMIN)^3
+        DeltaCum[k] = ((masscum[k])/Vol)/MeanDen - 1.0
+        DenHalosCum[k] = ((NHaloscum[k])/Vol)/MeanHalos
     end
-
-    ## TODO no funca...
-    # Delta = (mass./Vol) / (MassBall/(4pi/3 * (2RMAX)^3)) .- 1 
-    # DeltaCum = (cumsum(mass)./VolCum) / (MassBall/(4pi/3 * (2RMAX)^3)) .- 1 
-    # DenHalos = (NHalos./Vol) / (MassBall/(4pi/3 * (2RMAX)^3))
-    # DenHalosCum = (cumsum(mass)./VolCum) / (HalosBall/(4pi/3 * (2RMAX)^3))
     
     println("Done!")
 
