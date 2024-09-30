@@ -155,7 +155,8 @@ Calcula el perfil de 1 void dados los halos S
 """
 function individual_profile(S::Matrix{Float32}, 
                          RMIN, RMAX, NBINS,
-                         rv, z, xv, yv, zv)
+                         rv, z, xv, yv, zv;
+                         w=false, id=nothing)
     
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
@@ -198,11 +199,19 @@ function individual_profile(S::Matrix{Float32},
         NHalosCum[k+1] = NHalosCum[k+1]/vol/MeanNTrac - 1.0
     end
 
+    if w
+        println("Saving in void_$id.dat")
+        open("voids/void_$id.dat", "w") do IO
+            writedlm(io, [Delta DeltaCum NHalos NHalosCum MeanDen])
+        end
+        return nothing
+    end
+
     return Delta, DeltaCum, NHalos, NHalosCum, MeanDen
 end
 
 """ 
-Perfil parcial, masa en el void y masa en la cáscara comóvil de 1 void.
+Perfil parcial, masa en el void y masa en una bola de 2RMAX de 1 void.
 Para ser usada con stacking únicamente
 """
 function partial_profile(S::Matrix{Float32}, 
@@ -240,7 +249,17 @@ function radial_profile(RMIN, RMAX, NBINS,
                         flag, lensname, tracname)
     ## reading cats
     println("......................")
-    println("Reading lenses...")
+    println("Reading lenses with:")
+
+    println("Rvmin......: $Rv_min Mpc")
+    println("Rvmax......: $Rv_max Mpc")
+    println("zmin.......: $z_min")
+    println("zmax.......: $z_max")
+    println("rho1min....: $rho1_min")
+    println("rho1max....: $rho1_max")
+    println("rho2min....: $rho2_min")
+    println("rho2max....: $rho2_max")
+
     L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag=flag, lensname=lensname)
 
     nvoids = nrow(L)
@@ -253,21 +272,11 @@ function radial_profile(RMIN, RMAX, NBINS,
     println("Done!")
     
     println("......................")
-    println("Calculating profile...")
+    println("Calculating profile for:")
 
     println("RMIN.......: $RMIN")
     println("RMAX.......: $RMAX")
     println("NBINS......: $NBINS")
-
-    println("......................")
-    println("Rvmin......: $Rv_min Mpc")
-    println("Rvmax......: $Rv_max Mpc")
-    println("zmin.......: $z_min")
-    println("zmax.......: $z_max")
-    println("rho1min....: $rho1_min")
-    println("rho1max....: $rho1_max")
-    println("rho2min....: $rho2_min")
-    println("rho2max....: $rho2_max")
 
     DR = (RMAX-RMIN)/NBINS
     
@@ -275,7 +284,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     NHalos = zeros(NBINS, nvoids)
     MassBall = zeros(nvoids)
 
-    @threads for i in 1:nvoids
+    for i in 1:nvoids
         mass[:,i], NHalos[:,i], MassBall[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
     
@@ -286,14 +295,8 @@ function radial_profile(RMIN, RMAX, NBINS,
         VolCum[k+1] = (4pi/3) * ((k+1.0)*DR + RMIN)^3
     end
 
-    MeanDen = sum(MassBall)/((4pi/3) * (2RMAX)^3)
-    TotMass = vec(sum(mass, dims=2))
-    TotNHalos = vec(sum(NHalos, dims=2))
+    Delta = (vec(sum(mass,dims=2)) ./ sum(MassBall)) .* ((4pi/3 * (2RMAX)^3) ./ Vol) .- 1
 
-    Delta = TotMass./Vol./MeanDen .- 1.0
-    DeltaCum = cumsum(TotMass)./VolCum./MeanDen .- 1.0
-    DenHalos = TotNHalos./Vol
-    DenHalosCum = cumsum(TotNHalos)./VolCum
 
     println("Done!")
 
@@ -314,4 +317,43 @@ function radial_profile(RMIN, RMAX, NBINS,
 
     println("Done!")
     println("......................")
+end
+
+function calculate_all_indiv(RMIN, RMAX, NBINS, 
+                             Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max,
+                             flag, lensname, tracname)
+    println("Calculando todos los perfiles individuales para:")
+
+    println("Rvmin......: $Rv_min Mpc")
+    println("Rvmax......: $Rv_max Mpc")
+    println("zmin.......: $z_min")
+    println("zmax.......: $z_max")
+    println("rho1min....: $rho1_min")
+    println("rho1max....: $rho1_max")
+    println("rho2min....: $rho2_min")
+    println("rho2max....: $rho2_max")
+
+    L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag=flag, lensname=lensname)
+
+    nvoids = nrow(L)
+    println("Nvoids.....: $nvoids")
+    println("Done!")
+
+    println("......................")
+    println("Reading halos...")
+    S = traccat_load(z_min, z_max, tracname=tracname)
+    println("Done!")
+
+    println("......................")
+    println("Calculating profile for:")
+
+    println("RMIN.......: $RMIN")
+    println("RMAX.......: $RMAX")
+    println("NBINS......: $NBINS")
+
+    for i in 1:nvoids
+        individual_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8], w=true, id=L[i,1])
+    end
+
+
 end
