@@ -29,8 +29,9 @@ end
 Total mass in a ball centered in rv and radius RMAX, in [Msun / h]
 """
 function mass_ball(S, RMAX, rv, xv, yv, zv)
-    mass = sum(10.0 .^ get_halos(S, 0.0, RMAX, rv, xv, yv, zv)[:,1])
-    return mass
+    halos = get_halos(S, 0.0, RMAX, rv, xv, yv, zv)
+    mass = sum(10.0 .^ halos[:,1])
+    return mass, size(halos)[1]
 end
 
 """
@@ -221,7 +222,7 @@ function partial_profile(S::Matrix{Float32},
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
     tcat = get_halos(S, RMIN, RMAX, rv, xv, yv, zv)
-    MassBall = mass_ball(S, 2RMAX, rv, xv, yv, zv)
+    MassBall, HalosBall = mass_ball(S, 2RMAX, rv, xv, yv, zv)
 
     NHalos = zeros(NBINS)
     mass   = zeros(NBINS)
@@ -238,7 +239,7 @@ function partial_profile(S::Matrix{Float32},
         end
     end
     
-    return mass, NHalos, MassBall
+    return mass, NHalos, MassBall, HalosBall
 end
 
 """
@@ -280,12 +281,18 @@ function radial_profile(RMIN, RMAX, NBINS,
 
     DR = (RMAX-RMIN)/NBINS
     
-    mass   = zeros(NBINS, nvoids)
-    NHalos = zeros(NBINS, nvoids)
-    MassBall = zeros(nvoids)
+    mass   = zeros(NBINS)
+    NHalos = zeros(NBINS)
+    MassBall  = 0.0
+    HalosBall = 0.0
 
     for i in 1:nvoids
-        mass[:,i], NHalos[:,i], MassBall[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
+        res = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
+
+        mass   += res[1]
+        NHalos += res[2]
+        MassBall  += res[3]
+        HalosBall += res[4]
     end
     
     Vol = zeros(NBINS)
@@ -295,9 +302,12 @@ function radial_profile(RMIN, RMAX, NBINS,
         VolCum[k+1] = (4pi/3) * ((k+1.0)*DR + RMIN)^3
     end
 
-    Delta = (vec(sum(mass,dims=2)) ./ sum(MassBall)) .* ((4pi/3 * (2RMAX)^3) ./ Vol) .- 1
-
-
+    ## TODO no funca...
+    Delta = (mass./Vol) / (MassBall/(4pi/3 * (2RMAX)^3)) .- 1 
+    DeltaCum = (cumsum(mass)./VolCum) / (MassBall/(4pi/3 * (2RMAX)^3)) .- 1 
+    DenHalos = (NHalos./Vol) / (MassBall/(4pi/3 * (2RMAX)^3))
+    DenHalosCum = (cumsum(mass)./VolCum) / (HalosBall/(4pi/3 * (2RMAX)^3))
+    
     println("Done!")
 
     println("......................")
