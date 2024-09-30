@@ -8,6 +8,10 @@
 *.fits
 *.txt
 *.csv
+*.dat
 
 # ignorando jupyters
 *.ipynb
+
+# ignorando carpeta con voids
+voids/
