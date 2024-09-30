@@ -201,7 +201,7 @@ function individual_profile(S::Matrix{Float32},
 
     if w
         println("Saving in void_$id.dat")
-        open("voids/void_$id.dat", "w") do IO
+        open("voids/void_$id.dat", "w") do io
             writedlm(io, [Delta DeltaCum NHalos NHalosCum MeanDen])
         end
         return nothing
