@@ -351,7 +351,7 @@ function calculate_all_indiv(RMIN, RMAX, NBINS,
     println("RMAX.......: $RMAX")
     println("NBINS......: $NBINS")
 
-    for i in 1:nvoids
+    @threads for i in 1:nvoids
         id = Int(L[i,1])
         if !isfile("void_$id.dat")
             individual_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8], w=true, id=Int64(L[i,1]))
