@@ -202,7 +202,7 @@ function individual_profile(S::Matrix{Float32},
     if w
         println("Saving in void_$id.dat")
         open("voids/void_$id.dat", "w") do io
-            writedlm(io, [Delta DeltaCum NHalos NHalosCum MeanDen])
+            writedlm(io, [Delta DeltaCum NHalos NHalosCum])
         end
         return nothing
     end
@@ -352,7 +352,7 @@ function calculate_all_indiv(RMIN, RMAX, NBINS,
     println("NBINS......: $NBINS")
 
     for i in 1:nvoids
-        individual_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8], w=true, id=L[i,1])
+        individual_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8], w=true, id=Int64(L[i,1]))
     end
 
 
