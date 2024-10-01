@@ -220,7 +220,8 @@ function partial_profile(S::Matrix{Float32},
     ### tcat[:,1] = logm
     ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
     tcat = get_halos(S, RMIN, RMAX, rv, xv, yv, zv)
-    MassBall, HalosBall = mass_ball(S, 2RMAX, rv, xv, yv, zv)
+    # MassBall, HalosBall = mass_ball(S, 2RMAX, rv, xv, yv, zv)
+    MassShell, VolShell = mass_comovingshell(S, RMAX, rv, xv, yv, zv)
 
     NHalos = zeros(NBINS)
     mass   = zeros(NBINS)
@@ -237,7 +238,7 @@ function partial_profile(S::Matrix{Float32},
         end
     end
     
-    return mass, NHalos, MassBall, HalosBall
+    return mass, NHalos, MassShell, HalosShell
 end
 
 """
@@ -281,40 +282,46 @@ function radial_profile(RMIN, RMAX, NBINS,
     
     mass   = zeros(NBINS)
     NHalos = zeros(NBINS)
-    MassBall  = 0.0
-    HalosBall = 0.0
+    MassShell  = 0.0
+    VolShell = 0.0
     for i in 1:nvoids
         res = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
 
         mass   += res[1]
         NHalos += res[2]
-        MassBall  += res[3]
-        HalosBall += res[4]
+        MassShell  += res[3]
+        VolShell += res[4]
     end
 
     masscum = cumsum(mass)
     NHalosCum = cumsum(NHalos)
 
-    ## TODO probar con den en comoving shell...
-    ## diferencia con ball de 1 orden de mag...
-    ## igual la curva no va a cambiar, solo los valores
-    MeanDen = MassBall/(4pi/3 * (2RMAX)^3)
-    MeanHalos = HalosBall/(4pi/3 * (2RMAX)^3)
+    ### ----------------------------------------------------- BALL
+    # MeanDen = MassBall/(4pi/3 * (2RMAX)^3)
+    # MeanHalos = HalosBall/(4pi/3 * (2RMAX)^3)
     
-    Delta    = zeros(NBINS)
-    DeltaCum = zeros(NBINS)
-    DenHalos = zeros(NBINS)
-    DenHalosCum = zeros(NBINS)
-    for k in 1:NBINS
-        Vol = (4pi/3) * ((k*DR + RMIN)^3 - ((k-1.0)*DR + RMIN)^3)
-        Delta[k] = (mass[k]/Vol)/MeanDen - 1.0
-        DenHalos[k] = (NHalos[k]/Vol)/MeanHalos
+    # Delta    = zeros(NBINS)
+    # DeltaCum = zeros(NBINS)
+    # DenHalos = zeros(NBINS)
+    # DenHalosCum = zeros(NBINS)
+    # for k in 1:NBINS
+    #     Vol = (4pi/3) * ((k*DR + RMIN)^3 - ((k-1.0)*DR + RMIN)^3)
+    #     Delta[k] = (mass[k]/Vol)/MeanDen - 1.0
+    #     DenHalos[k] = (NHalos[k]/Vol)/MeanHalos
 
-        Vol = (4pi/3) * (k*DR + RMIN)^3
-        DeltaCum[k] = ((masscum[k])/Vol)/MeanDen - 1.0
-        DenHalosCum[k] = ((NHaloscum[k])/Vol)/MeanHalos
-    end
+    #     Vol = (4pi/3) * (k*DR + RMIN)^3
+    #     DeltaCum[k] = ((masscum[k])/Vol)/MeanDen - 1.0
+    #     DenHalosCum[k] = ((NHaloscum[k])/Vol)/MeanHalos
+    # end
     
+    ### ----------------------------------------------------- SHELL
+    Delta = zeros(NBINS)
+    for k in 1:NBINS
+        V = (4pi/3) * ((k*DR + RMIN)^3 - ((k-1.0)*DR + RMIN)^3)
+
+        Delta[k] = (mass[k] * VolShell)/(V * MassShell)
+    end
+
     println("Done!")
 
     println("......................")
