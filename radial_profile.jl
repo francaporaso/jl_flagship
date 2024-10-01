@@ -312,7 +312,7 @@ function radial_profile(RMIN, RMAX, NBINS,
 
         Vol = (4pi/3) * (k*DR + RMIN)^3
         DeltaCum[k] = ((masscum[k])/Vol)/MeanDen - 1.0
-        DenHalosCum[k] = ((NHaloscum[k])/Vol)/MeanHalos
+        DenHalosCum[k] = ((NHalosCum[k])/Vol)/MeanHalos
     end
     
     ### ----------------------------------------------------- SHELL
