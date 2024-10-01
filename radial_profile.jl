@@ -285,7 +285,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     NHalos = zeros(NBINS)
     MassBall  = 0.0
     HalosBall = 0.0
-    for i in 1:nvoids
+    @threads for i in 1:nvoids
         res = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
 
         mass   += res[1]
