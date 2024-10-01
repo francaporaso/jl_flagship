@@ -238,7 +238,7 @@ function partial_profile(S::Matrix{Float32},
         end
     end
     
-    return mass, NHalos, MassShell, HalosShell
+    return mass, NHalos, MassShell, VolShell
 end
 
 """
