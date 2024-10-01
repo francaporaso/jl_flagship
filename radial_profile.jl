@@ -120,7 +120,7 @@ function traccat_load(z_min, z_max;
     f = FITS(tracname)[2]
     S = Matrix{Float32}([read(f, "z_cgal") read(f, "xhalo") read(f, "yhalo") read(f, "zhalo") read(f, "lmhalo")]) #read(f, "flag_central")])
 
-    m_z = @. (S[:,1] >= z_min) && (S[:,1] <= z_max)
+    m_z = @. (S[:,1] >= (z_min-0.1)) && (S[:,1] <= (z_max+0.1))
     
     ### para el catalogo q tenemos ya están filtrados, este paso es al pedo
     # m_flag = @. (S[:,end] == zero(Float32)) ## halos centrales
