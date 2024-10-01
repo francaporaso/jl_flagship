@@ -3,8 +3,7 @@ using DataFrames
 using FITSIO
 using Statistics
 using Base.Threads
-using ProgressMeter
-# using Distributed
+#using ProgressMeter
 
 """
 Mean density of the universe in [Msun h^2 / Mpc^3], calculated like:
@@ -276,25 +275,24 @@ function radial_profile(RMIN, RMAX, NBINS,
 
     DR = (RMAX-RMIN)/NBINS
     
-    mass   = zeros(NBINS)
-    NHalos = zeros(NBINS)
-    MassBall  = 0.0
-    HalosBall = 0.0
-    @showprogress for i in 1:nvoids
-        res = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
+    mass   = zeros(NBINS, nvoids)
+    NHalos = zeros(NBINS, nvoids)
+    MassBall  = zeros(nvoids)
+    HalosBall = zeros(nvoids)
 
-        mass   += res[1]
-        NHalos += res[2]
-        MassBall  += res[3]
-        HalosBall += res[4]
+    ### ----------------------------------------------------- Threads
+    @threads for i in 1:nvoids
+        mass[:,i], NHalos[:,i], MassBall[i], HalosBall[i] = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
     end
 
-    masscum = cumsum(mass)
-    NHalosCum = cumsum(NHalos)
-
     ### ----------------------------------------------------- BALL
+    mass = vec(sum(mass, dims=2))
+    NHalos = vec(sum(NHalos, dims=2))
+    MassBall = sum(MassBall)
+    HalosBall = sum(HalosBall)
+
     MeanDen = MassBall/(4pi/3 * (2RMAX)^3)
-    MeanHalos = HalosBall/(4pi/3 * (2RMAX)^3)
+    MeanHalos = sHalosBall/(4pi/3 * (2RMAX)^3)
     
     Delta    = zeros(NBINS)
     DeltaCum = zeros(NBINS)
