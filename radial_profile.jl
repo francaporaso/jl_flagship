@@ -108,26 +108,20 @@ Loads the tracers catalog
 """
 function traccat_load(z_min, z_max; 
                       tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice-halos-cut.fits")
-    ## S.unique_halo_id
-    ## S.z_cgal (true redshift)
-    ## S.xhalo
-    ## S.yhalo
-    ## S.xhalo
-    ## S.zhalo
-    ## S.lmhalo
-    ## S.flag_central
-    ## S.cgal (comoving distance)
-    f = FITS(tracname)[2]
-    S = Matrix{Float32}([read(f, "z_cgal") read(f, "xhalo") read(f, "yhalo") read(f, "zhalo") read(f, "lmhalo")]) #read(f, "flag_central")])
 
-    m_z = @. (S[:,1] >= (z_min-0.2)) && (S[:,1] <= (z_max+0.2))
+    f = FITS(tracname)[2]
+    S = Matrix{Float32}([read(f, "xhalo") read(f, "yhalo") read(f, "zhalo") read(f, "lmhalo")]) #read(f, "flag_central")])
+
+    return S
     
-    ### para el catalogo q tenemos ya están filtrados, este paso es al pedo
+    ### Filtros en flag_central y redshift:
+    # S = Matrix{Float32}([read(f, "z_cgal") read(f, "xhalo") read(f, "yhalo") read(f, "zhalo") read(f, "lmhalo")]) #read(f, "flag_central")])
+    # m_z = @. (S[:,1] >= (z_min-0.2)) && (S[:,1] <= (z_max+0.2))
     # m_flag = @. (S[:,end] == zero(Float32)) ## halos centrales
     # mask = @views @. m_z && m_flag
     # return S[mask,2:5]    
 
-    return S[m_z,2:end]
+    # return S[m_z,2:end]
 end
 
 
@@ -141,8 +135,8 @@ function get_halos(S::Matrix{Float32},
 
     ### Máscara en una bola con centro (xv,yv,zv) y radio (1+2DR)RMAX*rv
     distance = @views @. sqrt((S[:,1] - xv)^2 + (S[:,2] - yv)^2 + (S[:,3] - zv)^2)/rv
-    m1 = distance .< RMAX
-    m2 = distance .> RMIN
+    m1 = distance .< 1.1RMAX
+    m2 = distance .> 0.9RMIN
 
     halos_list = hcat(S[m1 .&& m2, end], distance[m1 .&& m2])
 
@@ -285,7 +279,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     NHalos = zeros(NBINS)
     MassBall  = 0.0
     HalosBall = 0.0
-    @threads for i in 1:nvoids
+    for i in 1:nvoids
         res = partial_profile(S, RMIN, RMAX, NBINS, L[i,2], L[i,5], L[i,6], L[i,7], L[i,8])
 
         mass   += res[1]
