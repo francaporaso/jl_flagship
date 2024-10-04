@@ -1,6 +1,10 @@
 function array_split(ary, step)
     n = size(ary)[1]
     lbins = round(Int64, n/step)
+    if n % step != 0
+        lbins += 1
+    end
+
     sub_ary = Vector{Matrix{Float64}}(undef, lbins)
     x = 1
     for i in 1:lbins
@@ -11,5 +15,6 @@ function array_split(ary, step)
             sub_ary[i] = ary[x:end,:]
         end
     end
+
     return sub_ary
-end
+end 
