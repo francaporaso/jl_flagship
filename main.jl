@@ -1,7 +1,7 @@
 using Printf
 using Distributed
 
-const NCORES = 100
+const NCORES = 32
 
 addprocs(NCORES)
 @everywhere include("radial_profile.jl")
