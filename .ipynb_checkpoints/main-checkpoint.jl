@@ -27,7 +27,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     println("rho2min....: $rho2_min")
     println("rho2max....: $rho2_max")
 
-    @everywhere L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag=flag, lensname=lensname)
+    L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag=flag, lensname=lensname)
 
     # nvoids = nrow(L)
     nvoids = size(L)[1]
@@ -37,7 +37,7 @@ function radial_profile(RMIN, RMAX, NBINS,
     println("......................")
     println("Reading halos...")
 
-    @everywhere S = traccat_load(z_min, z_max, tracname=tracname)
+    S = traccat_load(z_min, z_max, tracname=tracname)
     
     println("Done!")
     
@@ -57,6 +57,8 @@ function radial_profile(RMIN, RMAX, NBINS,
     ## split lens catalogue
     Lsplit = array_split(L, ncores)
     tot_num = length(Lsplit)
+
+    DR = (RMAX-RMIN)/NBINS
     
     mass_p   = zeros(NBINS, nvoids)
     NHalos_p = zeros(NBINS, nvoids)
@@ -77,10 +79,10 @@ function radial_profile(RMIN, RMAX, NBINS,
         end
         
         for j in eachindex(res)
-            mass_p[:,l]    += res[j][1]
-            NHalos_p[:,l]  += res[j][2]
-            MassBall_p[l]  += res[j][3]
-            HalosBall_p[l] += res[j][4]
+            mass_p[:,l]    += res[l][1]
+            NHalos_p[:,l]  += res[l][2]
+            MassBall_p[l]  += res[l][3]
+            HalosBall_p[l] += res[l][4]
         end
         
     end
@@ -90,16 +92,12 @@ function radial_profile(RMIN, RMAX, NBINS,
     println("Calculando stacking...")
     
     mass = vec(sum(mass_p, dims=2))
-    masscum = cumsum(mass)
     NHalos = vec(sum(NHalos_p, dims=2))
-    NHalosCum = cumsum(NHalos)
     MassBall = sum(MassBall_p)
     HalosBall = sum(HalosBall_p)
 
-    DR = (RMAX-RMIN)/NBINS
-
     MeanDen = MassBall/(4pi/3 * (2RMAX)^3)
-    MeanHalos = HalosBall/(4pi/3 * (2RMAX)^3)
+    MeanHalos = sHalosBall/(4pi/3 * (2RMAX)^3)
     
     Delta    = zeros(NBINS)
     DeltaCum = zeros(NBINS)
