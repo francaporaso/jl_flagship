@@ -150,10 +150,10 @@ end
 @everywhere begin  
     const RMIN, RMAX, NBINS = 0.05, 5.0, 100
     const Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10.0, 12.0, 0.2, 0.25, -1.0, -0.8, -1.0, 100.0, 2
-    const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
-    const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
-    # const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
-    # const tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
+    # const lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
+    # const tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
+    const lensname = "/mnt/simulations/MICE/voids_MICE.dat"
+    const tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 end
 
 t = @elapsed begin
