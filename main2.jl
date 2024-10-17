@@ -1,6 +1,6 @@
 using Distributed
 
-NCORES = 4
+NCORES = 16
 
 addprocs(NCORES-1)
 nc = nprocs()
