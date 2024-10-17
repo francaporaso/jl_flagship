@@ -1,10 +1,3 @@
-using DelimitedFiles, FITSIO, DataFrames
-using Statistics
-# using Base.Threads
-#using ProgressMeter
-
-include("tools.jl")
-
 """
 Loads the lenses catalog
 """
