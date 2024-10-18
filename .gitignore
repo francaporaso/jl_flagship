@@ -11,6 +11,7 @@
 *.dat
 
 # ignorando jupyters
+*.ipynb
 .ipynb_checkpoints/
 
 # ignorando carpeta con voids
