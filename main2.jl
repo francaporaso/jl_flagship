@@ -1,6 +1,6 @@
 using Distributed
 
-NCORES = 8
+NCORES = 4
 
 addprocs(NCORES-1)
 nc = nprocs()
@@ -19,10 +19,10 @@ end
 @everywhere begin 
     RMIN, RMAX, NBINS = 0.05, 5.0, 100
     Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10.0, 12.0, 0.2, 0.25, -1.0, -0.9, 0.0, 100.0, 2
-    # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
-    # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
-    lensname = "/mnt/simulations/MICE/voids_MICE.dat"
-    tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
+    lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
+    tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
+    # lensname = "/mnt/simulations/MICE/voids_MICE.dat"
+    # tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 end
 
 
@@ -37,37 +37,31 @@ end
 println("NVOIDS: $nvoids")
 println("Corriendo en paralelo....")
 
-resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[i,2], L[i,6], L[i,7], L[i,8])
+resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[i,2], L[i,6], L[i,7], L[i,8], batch_size=NCORES)
 
 println("Hecho!")
 
 println("Calculando stacking...")
 
-mass_p   = zeros(NBINS, nvoids)
-NHalos_p = zeros(NBINS, nvoids)
-MassBall_p  = zeros(nvoids)
-HalosBall_p = zeros(nvoids)
+masa = zeros(NBINS)
+nhalos = zeros(NBINS)
+massball = 0.0
+halosball = 0.0
 
-for l in 1:nvoids
-    for j in eachindex(resmap)
-        mass_p[:,l]    += resmap[j][1]
-        NHalos_p[:,l]  += resmap[j][2]
-        MassBall_p[l]  += resmap[j][3]
-        HalosBall_p[l] += resmap[j][4]
-    end
+for res in resmap
+    masa      += res[1]
+    nhalos    += res[2]
+    massball  += res[3]
+    halosball += res[4]
 end
 
-mass = vec(sum(mass_p, dims=2))
-masscum = cumsum(mass)
-NHalos = vec(sum(NHalos_p, dims=2))
-NHalosCum = cumsum(NHalos)
-MassBall = sum(MassBall_p)
-HalosBall = sum(HalosBall_p)
+masscum = cumsum(masa)
+nhaloscum = cumsum(nhalos)
 
 DR = (RMAX-RMIN)/NBINS
 
-MeanDen = MassBall/(4pi/3 * (2RMAX)^3)
-MeanHalos = HalosBall/(4pi/3 * (2RMAX)^3)
+MeanDen = massball/(4pi/3 * (2RMAX)^3)
+MeanHalos = halosball/(4pi/3 * (2RMAX)^3)
 
 Delta    = zeros(NBINS)
 DeltaCum = zeros(NBINS)
@@ -75,13 +69,14 @@ DenHalos = zeros(NBINS)
 DenHalosCum = zeros(NBINS)
 for k in 1:NBINS
     Vol = (4pi/3) * ((k*DR + RMIN)^3 - ((k-1.0)*DR + RMIN)^3)
-    Delta[k] = (mass[k]/Vol)/MeanDen - 1.0
-    DenHalos[k] = (NHalos[k]/Vol)/MeanHalos
+    Delta[k] = (masa[k]/Vol)/MeanDen - 1.0
+    DenHalos[k] = (nhalos[k]/Vol)/MeanHalos
 
     Vol = (4pi/3) * (k*DR + RMIN)^3
     DeltaCum[k] = ((masscum[k])/Vol)/MeanDen - 1.0
-    DenHalosCum[k] = ((NHalosCum[k])/Vol)/MeanHalos
+    DenHalosCum[k] = ((nhaloscum[k])/Vol)/MeanHalos
 end
+
 
 println("Saving...")    
 
