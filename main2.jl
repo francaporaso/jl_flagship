@@ -16,17 +16,14 @@ println("NCORES: $nc")
     include("tools.jl")
 end
 
-t = @elapsed begin
-
 @everywhere begin 
     RMIN, RMAX, NBINS = 0.05, 5.0, 100
-    Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10.0, 12.0, 0.2, 0.25, -1.0, -0.9, 0.0, 100.0, 2
+    Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10.0, 12.0, 0.2, 0.25, -1.0, -0.9, -1.0, 100.0, 2
     # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
     # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
     lensname = "/mnt/simulations/MICE/voids_MICE.dat"
     tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 end
-
 
 println("Cargando catálogos")
 @everywhere begin
@@ -39,9 +36,13 @@ end
 println("NVOIDS: $nvoids")
 println("Corriendo en paralelo....")
 
-resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[i,2], L[i,6], L[i,7], L[i,8], batch_size=NCORES)
+t = @elapsed begin
+    resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[i,2], L[i,6], L[i,7], L[i,8], batch_size=NCORES)    
+end
 
+t /= 60.0
 println("Hecho!")
+println("Termiando en $t mins")
 
 println("Calculando stacking...")
 
@@ -82,13 +83,8 @@ end
 
 println("Saving...")    
 
-open("pru_stack_S.csv", "w") do io 
+open("pru_stack_par.csv", "w") do io 
     writedlm(io, [Delta DeltaCum DenHalos DenHalosCum], ',')
 end
 
 println("Done!")
-
-end
-
-t /= 60.0
-println("Termiando en $t mins")
