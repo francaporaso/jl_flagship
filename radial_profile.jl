@@ -35,7 +35,6 @@ function traccat_load(z_min, z_max;
     S = Matrix{Float32}([read(f, "xhalo") read(f, "yhalo") read(f, "zhalo") read(f, "lmhalo")]) #read(f, "flag_central")])
 
     if isnothing(lmhalo_min)
-        println("ENTRA ACá")
         return S
     end
 
