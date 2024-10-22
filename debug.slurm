@@ -15,4 +15,4 @@
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export MKL_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
-srun julia jl_flagship/PERFILES.jl
+srun julia PERFILES.jl
