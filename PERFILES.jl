@@ -1,7 +1,7 @@
 using Distributed
 using Printf
 
-NCORES = 32
+NCORES = 4
 addprocs(NCORES)
 
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
@@ -14,6 +14,7 @@ filename = @sprintf "radialprof_stack_R_%.0f_%.0f_z%.1f_%.1f.csv" Rv_min Rv_max 
 
 @everywhere begin 
     using FITSIO, DelimitedFiles
+    using ProgressMeter
 end
 
 @everywhere begin
@@ -66,7 +67,6 @@ end
                             rv, xv, yv, zv;
                             tracname="/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
                             #"/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits")
-                            #
 
         ### tcat[:,1] = logm
         ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
@@ -130,7 +130,7 @@ function paralellization(partial, NCORES,
     nvoids = size(L)[1]
     println("NVOIDS: .... $nvoids")
 
-    resmap = pmap(partial, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), view(L,:,2), view(L,:,6), view(L,:,7), view(L,:,8), batch_size=NCORES)
+    resmap = @showprogress pmap(partial, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), view(L,:,2), view(L,:,6), view(L,:,7), view(L,:,8), batch_size=NCORES)
 
     return resmap
 end
@@ -176,6 +176,8 @@ function stacking(resmap,
     open(filename, "w") do io 
         writedlm(io, [Delta DeltaCum DeltaHalos DeltaHalosCum], ',')
     end
+
+    println("DONE!")
 
     return 0
 end
