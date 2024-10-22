@@ -5,7 +5,7 @@ NCORES = 4
 addprocs(NCORES)
 
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
-Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 9.622f0, 50.0f0, 0.2f0, 0.4f0, -1.0f0, -0.8f0, -1.0f0, 100.0f0, 2.0f0
+Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 9.622f0, 10.0f0, 0.2f0, 0.25f0, -1.0f0, -0.8f0, -1.0f0, 100.0f0, 2.0f0
 filename = @sprintf "radialprof_stack_R_%.0f_%.0f_z%.1f_%.1f.csv" Rv_min Rv_max z_min z_max
 # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
@@ -65,8 +65,8 @@ end
     """
     function partial_profile(RMIN, RMAX, NBINS,
                             rv, xv, yv, zv;
-                            tracname="/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
-                            #"/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits")
+                            tracname=#"/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
+                            "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits")
 
         ### tcat[:,1] = logm
         ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
@@ -123,8 +123,8 @@ Paralelizado de partial_profile
 function paralellization(partial, NCORES,
                          RMIN, RMAX, NBINS, 
                          Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max; 
-                         lensname="/mnt/simulations/MICE/voids_MICE.dat")
-                         #"/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat")
+                         lensname=#"/mnt/simulations/MICE/voids_MICE.dat")
+                         "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat")
 
     L = lenscat_load(Rv_min, Rv_max, z_min, z_max, -1.0, -0.8, rho2_min, rho2_max, lensname=lensname)
     nvoids = size(L)[1]
@@ -147,11 +147,11 @@ function stacking(resmap,
     massball  = 0.0
     halosball = 0.0
 
-    for i in 1:nvoids
-        mass  += resmap[i][1]
-        halos += resmap[i][2]
-        massball  += resmap[i][3]
-        halosball += resmap[i][4]
+    for res in resmap
+        mass  += res[1]
+        halos += res[2]
+        massball  += res[3]
+        halosball += res[4]
     end
         
     meandenball   = massball/(4pi/3 * (5RMAX)^3)
