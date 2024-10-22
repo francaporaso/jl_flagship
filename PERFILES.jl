@@ -64,8 +64,9 @@ end
     """
     function partial_profile(RMIN, RMAX, NBINS,
                             rv, xv, yv, zv;
-                            tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits")
-                            #"/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
+                            tracname="/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
+                            #"/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits")
+                            #
 
         ### tcat[:,1] = logm
         ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
@@ -122,8 +123,8 @@ Paralelizado de partial_profile
 function paralellization(partial, NCORES,
                          RMIN, RMAX, NBINS, 
                          Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max; 
-                         lensname="/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat")
-                         #"/mnt/simulations/MICE/voids_MICE.dat")
+                         lensname="/mnt/simulations/MICE/voids_MICE.dat")
+                         #"/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat")
 
     L = lenscat_load(Rv_min, Rv_max, z_min, z_max, -1.0, -0.8, rho2_min, rho2_max, lensname=lensname)
     nvoids = size(L)[1]
