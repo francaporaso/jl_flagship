@@ -16,3 +16,7 @@
 
 # ignorando carpeta con voids
 voids/
+
+# ignorando slurms outputs
+*.out
+
