@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=radialprofs
+#SBATCH --job-name=radialprofs2
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=56
 #SBATCH --time=3-00:00:00
