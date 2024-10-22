@@ -226,8 +226,7 @@ stacking(
         paralellization(
             partial_profile, NCORES,
             RMIN, RMAX, NBINS,
-            Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max,
-            lensname=lensname
+            Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max
         ), 
         RMIN, RMAX, NBINS,
         filename=filename
