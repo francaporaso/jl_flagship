@@ -1,11 +1,11 @@
 using Distributed
 using Printf
 
-NCORES = 8
+NCORES = 32
 addprocs(NCORES)
 
-RMIN, RMAX, NBINS = 0.0, 5.0, 50
-Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 9.622, 50.0, 0.2, 0.4, -1.0, -0.8, -1.0, 100.0, 2
+RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
+Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 9.622f0, 50.0f0, 0.2f0, 0.4f0, -1.0f0, -0.8f0, -1.0f0, 100.0f0, 2.0f0
 filename = @sprintf "radialprof_stack_R_%.0f_%.0f_z%.1f_%.1f.csv" Rv_min Rv_max z_min z_max
 # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
@@ -21,8 +21,7 @@ end
     """
     Total mass in a ball centered in rv and radius RMAX, in [Msun / h]
     """
-    function mass_ball(S, RMAX, rv, xv, yv, zv)
-        halos = get_halos(S, 0.0, RMAX, rv, xv, yv, zv)
+    function mass_ball(halos)
         mass = sum(10.0 .^ halos[:,1])
         return mass, size(halos)[1]
     end
@@ -37,7 +36,7 @@ end
 
         ### Máscara en una bola con centro (xv,yv,zv) y radio (1+2DR)RMAX*rv
         distance = @. sqrt((S[:,1] - xv)^2 + (S[:,2] - yv)^2 + (S[:,3] - zv)^2)/rv
-        m1 = @. (distance <= RMAX) && (distance >= RMIN)
+        m = @. (distance <= RMAX) && (distance >= RMIN)
 
         halos_list = [S[m, end] distance[m]]
 
@@ -65,22 +64,17 @@ end
     """
     function partial_profile(RMIN, RMAX, NBINS,
                             rv, xv, yv, zv;
-                            tracname="/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
-                            
-        #"/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
-
-        ## TODO idea: 
-        ### como get_halos se llama dos veces primero para tcat y dsp en mass_ball,
-        ### cambiar a que llame una unica vez con los halos necesarios para mass_ball y después descartar
-        ### con una máscara los halos que no sirven para el perfil. 
-        #### Segun @btime get_halos es PESADA de calcular, si reduzco una vez la cantidad de llamados, mejora el uso de memoria
+                            tracname="/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits")
+                            #"/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
 
         ### tcat[:,1] = logm
         ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
         S = traccat_load(tracname=tracname)
-        tcat = get_halos(view(S,:,:), RMIN, RMAX, rv, xv, yv, zv)
-        MassBall, HalosBall = mass_ball(view(S,:,:), 5RMAX, rv, xv, yv, zv)
-        # MassShell, VolShell = mass_comovingshell(S, RMAX, rv, xv, yv, zv)
+        tcat = get_halos(view(S,:,:), 0.0f0, 5RMAX, rv, xv, yv, zv)
+        MassBall, HalosBall = mass_ball(view(tcat,:,:))
+
+        mask = @. (tcat[:,2] <= RMAX) && (tcat[:,2] >= RMIN)
+        tcat = tcat[mask, :]
 
         NHalos = zeros(NBINS)
         mass   = zeros(NBINS)
@@ -96,7 +90,6 @@ end
         end
         
         return mass, NHalos, MassBall, HalosBall
-
     end
 
 end ## fin de @everywhere begin
@@ -129,7 +122,8 @@ Paralelizado de partial_profile
 function paralellization(partial, NCORES,
                          RMIN, RMAX, NBINS, 
                          Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max; 
-                         lensname="/mnt/simulations/MICE/voids_MICE.dat")
+                         lensname="/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat")
+                         #"/mnt/simulations/MICE/voids_MICE.dat")
 
     L = lenscat_load(Rv_min, Rv_max, z_min, z_max, -1.0, -0.8, rho2_min, rho2_max, lensname=lensname)
     nvoids = size(L)[1]
@@ -181,6 +175,8 @@ function stacking(resmap,
     open(filename, "w") do io 
         writedlm(io, [Delta DeltaCum DeltaHalos DeltaHalosCum], ',')
     end
+
+    return 0
 end
 
 stacking(

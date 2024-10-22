@@ -57,3 +57,29 @@ function individual_profile(S::Matrix{Float32},
 
     return Delta, DeltaCum, NHalos, NHalosCum, MeanDen
 end
+
+"""
+Divides a array in n/step parts. 
+If n%step = 0 then each part has the same number of elements,
+if not the last element in the resulting array has the rest
+"""
+function array_split(ary, step)
+    n = size(ary)[1]
+    lbins = round(Int64, n/step)
+    if n % step != 0
+        lbins += 1
+    end
+
+    sub_ary = Vector{Matrix{Float64}}(undef, lbins)
+    x = 1
+    for i in 1:lbins
+        try
+            sub_ary[i] = ary[x:x+step-1,:]
+            x += step
+        catch e
+            sub_ary[i] = ary[x:end,:]
+        end
+    end
+
+    return sub_ary
+end 
