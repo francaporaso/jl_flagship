@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=radialprofs
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=56
+#SBATCH --cpus-per-task=100
 #SBATCH --time=3-00:00:00
 #SBATCH --partition=batch
 ## An email is sent when the job is canceled or finished

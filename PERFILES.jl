@@ -1,11 +1,11 @@
 using Distributed
 using Printf
 
-NCORES = 8
+NCORES = 16
 addprocs(NCORES)
 
 RMIN, RMAX, NBINS = 0.0, 5.0, 50
-Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 6.0, 9.622, 0.2, 0.4, -1.0, -0.8, -1.0, 100.0, 2
+Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 9.622, 50.0, 0.2, 0.4, -1.0, -0.8, -1.0, 100.0, 2
 filename = @sprintf "radialprof_stack_R_%.0f_%.0f_z%.1f_%.1f.csv" Rv_min Rv_max z_min z_max
 # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
