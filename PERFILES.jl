@@ -12,52 +12,37 @@ filename = @sprintf "radialprof_stack_R_%.0f_%.0f_z%.1f_%.1f.csv" Rv_min Rv_max 
 # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
 lensname = "/mnt/simulations/MICE/voids_MICE.dat"
-# tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
+tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 
 @everywhere begin 
     using FITSIO, DelimitedFiles
 end
 
 @everywhere begin
+    
+    function get_halos(RMIN, RMAX, 
+                       rv, xv, yv, zv;
+                       tracname="/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
 
-    """
-    Total mass in a ball centered in rv and radius RMAX, in [Msun / h]
-    """
-    function mass_ball(halos)
-        mass = sum(10.0 .^ halos[:,1])
-        return mass, size(halos)[1]
-    end
-
-    """
-    Dado un sólo centro (xv,yv,zv) y su radio rv, encuentra los halos
-    al rededor del centro entre RMIN*rv hasta RMAX*rv
-    """
-    function get_halos(S,
-                    RMIN, RMAX,
-                    rv, xv, yv, zv)
-
-        ### Máscara en una bola con centro (xv,yv,zv) y radio (1+2DR)RMAX*rv
-        distance = @. sqrt((S[:,1] - xv)^2 + (S[:,2] - yv)^2 + (S[:,3] - zv)^2)/rv
-        m = @. (distance <= RMAX) && (distance >= RMIN)
-
-        halos_list = [S[m, end] distance[m]]
-
-        return halos_list
-    end
-
-    """
-    Loads the tracers catalog
-    """
-    function traccat_load(; tracname::String="/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
-
-        f = FITS(tracname)[2]
-        S::Matrix{Float32} = Matrix([read(f, "xhalo") read(f, "yhalo") read(f, "zhalo") read(f, "lmhalo")]) #read(f, "flag_central")])
-
-        ## halos más grandes q 10 DM particles
-        mp = 2.93f10 #Msun/h
-        m_logm = view(S,:,4) .> log10(10*mp)
+        mp = 2.93f10  # Msun/h
         
-        return S[m_logm, :]
+        f = FITS(tracname)[2]
+        xhalo = read(f, "xhalo")
+        yhalo = read(f, "yhalo")
+        zhalo = read(f, "zhalo")
+        lmhalo = read(f, "lmhalo")
+    
+        distance = @views @. sqrt((xhalo - xv)^2 + (yhalo - yv)^2 + (zhalo - zv)^2) / rv
+    
+        mask = (distance .<= RMAX) .&& (distance .>= RMIN) .&& (lmhalo .> log10(10 * mp))
+        
+        lmhalo = lmhalo[mask]
+        distance = distance[mask]
+
+        massball = sum(10.0f0 .^ lmhalo)
+        halosball = length(distance)
+    
+        return lmhalo, distance, massball, halosball
     end
 
     """ 
@@ -71,12 +56,13 @@ end
 
         ### tcat[:,1] = logm
         ### tcat[:,2] = comovil_dist from center (xv,yv,zv) in units of void radius [rv]
-        S = traccat_load(tracname=tracname)
-        tcat = get_halos(view(S,:,:), 0.0f0, 5RMAX, rv, xv, yv, zv)
-        MassBall, HalosBall = mass_ball(view(tcat,:,:))
+        
+        logm, distance, MassBall, HalosBall = get_halos(0.0f0, 5RMAX, rv, xv, yv, zv)
 
-        mask = @. (tcat[:,2] <= RMAX) && (tcat[:,2] >= RMIN)
-        tcat = tcat[mask, :]
+        mask = @. (distance <= RMAX) && (distance >= RMIN)
+        logm, distance = logm[mask], distance[mask]
+
+        @assert length(logm) == length(distance)
 
         NHalos = zeros(NBINS)
         mass   = zeros(NBINS)
@@ -85,10 +71,10 @@ end
         ### que corresponde (masa o halo)
         DR = (RMAX-RMIN)/NBINS
 
-        for t in 1:size(tcat)[1]
-            ibin = ceil(Int32, (tcat[t,2] - RMIN)/DR)
+        for (lm, d) in zip(logm,distance)
+            ibin = ceil(Int32, (d - RMIN)/DR)
             NHalos[ibin] += 1.0
-            mass[ibin]   += 10.0 ^ tcat[t,1]
+            mass[ibin]   += 10.0 ^ lm
         end
         
         return mass, NHalos, MassBall, HalosBall
