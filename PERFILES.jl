@@ -2,7 +2,7 @@ using Distributed
 using Printf
 using ProgressMeter
 
-NCORES = Int32(20)
+NCORES = Int32(10)
 addprocs(NCORES)
 
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
