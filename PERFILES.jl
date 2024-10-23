@@ -145,7 +145,11 @@ function stacking(NCORES,
 
     i = 1
     @showprogress for j in NCORES:NCORES:nvoids
-        resmap = pmap(partial_profile, fill(RMIN,NCORES), fill(RMAX,NCORES), fill(NBINS,NCORES), L[i:j,2], L[i:j,6], L[i:j,7], L[i:j,8], batch_size=NCORES)
+        resmap = pmap(
+            (RMIN, RMAX, NBINS,rv, xv, yv, zv) -> partial_profile(RMIN, RMAX, NBINS, rv, xv, yv, zv),
+            (fill(RMIN,NCORES), fill(RMAX,NCORES), fill(NBINS,NCORES), L[i:j,2], L[i:j,6], L[i:j,7], L[i:j,8]),
+            batch_size=NCORES,
+            )
         
         for res in resmap
             mass  += res[1]
