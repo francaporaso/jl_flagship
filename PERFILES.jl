@@ -1,7 +1,7 @@
 using Distributed
 using Printf
 
-NCORES = 32
+NCORES = Int32(25)
 addprocs(NCORES)
 
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
@@ -9,12 +9,12 @@ Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 6.0
 filename = @sprintf "radialprof_stack_R_%.0f_%.0f_z%.1f_%.1f.csv" Rv_min Rv_max z_min z_max
 # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
-# lensname = "/mnt/simulations/MICE/voids_MICE.dat"
+lensname = "/mnt/simulations/MICE/voids_MICE.dat"
 # tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 
 @everywhere begin 
     using FITSIO, DelimitedFiles
-    using ProgressMeter
+    # using ProgressMeter
 end
 
 @everywhere begin
@@ -118,31 +118,25 @@ function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min
 end
 
 """
-Paralelizado de partial_profile
+Calcula el stacking.
 """
-function paralellization(NCORES,
-                         RMIN, RMAX, NBINS, 
-                         Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max; 
-                         lensname="/mnt/simulations/MICE/voids_MICE.dat")
-                         #"/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat")
+function stacking(NCORES,
+                  RMIN, RMAX, NBINS
+                  Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max;
+                  lensname="/mnt/simulations/MICE/voids_MICE.dat"
+                  filename = "pru_stack_par.csv")
 
     L = lenscat_load(Rv_min, Rv_max, z_min, z_max, -1.0, -0.8, rho2_min, rho2_max, lensname=lensname)
     nvoids = size(L)[1]
+
     println("NVOIDS: .... $nvoids")
+    println("Coriendo en paralelo")
+    println("NCORES: .... $NCORES")
 
-    # resmap = @showprogress pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), view(L,:,2), view(L,:,6), view(L,:,7), view(L,:,8), batch_size=NCORES)
-    # resmap = @showprogress pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[:,2], L[:,6], L[:,7], L[:,8])
-    resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[:,2], L[:,6], L[:,7], L[:,8])
+    resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[:,2], L[:,6], L[:,7], L[:,8], batch_size=NCORES)
 
-    return resmap
-end
-
-"""
-Calcula el stacking de un cto de perfiles de masa resmap
-"""
-function stacking(resmap,
-                  RMIN, RMAX, NBINS;
-                  filename = "pru_stack_par.csv")
+    println("Done!")
+    println("Stacking...")
 
     mass  = zeros(NBINS)
     halos = zeros(NBINS)
@@ -184,12 +178,10 @@ function stacking(resmap,
     return 0
 end
 
-# stacking(
-#         paralellization(
-#             NCORES,
-#             RMIN, RMAX, NBINS,
-#             Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max
-#         ), 
-#         RMIN, RMAX, NBINS,
-#         filename=filename
-# )
+stacking(
+        NCORES,
+        RMIN, RMAX, NBINS,
+        Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max,
+        lensname=lensname,
+        filename=filename,
+)
