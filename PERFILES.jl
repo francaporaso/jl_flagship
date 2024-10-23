@@ -1,7 +1,7 @@
 using Distributed
 using Printf
 
-NCORES = 32
+NCORES = 20
 addprocs(NCORES)
 
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
