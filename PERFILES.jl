@@ -1,5 +1,6 @@
 using Distributed
 using Printf
+using ProgressMeter
 
 NCORES = Int32(20)
 addprocs(NCORES)
@@ -14,7 +15,6 @@ lensname = "/mnt/simulations/MICE/voids_MICE.dat"
 
 @everywhere begin 
     using FITSIO, DelimitedFiles
-    # using ProgressMeter
 end
 
 @everywhere begin
@@ -133,22 +133,36 @@ function stacking(NCORES,
     println("Coriendo en paralelo")
     println("NCORES: .... $NCORES")
 
-    resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[:,2], L[:,6], L[:,7], L[:,8], batch_size=NCORES)
+    ### TODO
+    ### probablemente el bug de memoria desaparece si se implementa el Lsplit...
 
-    println("Done!")
-    println("Stacking...")
-
+    ### ----------- intento de solución
     mass  = zeros(NBINS)
     halos = zeros(NBINS)
     massball  = 0.0
     halosball = 0.0
 
-    for res in resmap
-        mass  += res[1]
-        halos += res[2]
-        massball  += res[3]
-        halosball += res[4]
+    i = 1
+    @showprogress for j in NCORES:NCORES:nvoids
+        resmap = pmap(partial_profile, fill(RMIN,NCORES), fill(RMAX,NCORES), fill(NBINS,NCORES), L[i:j,2], L[i:j,6], L[i:j,7], L[i:j,8], batch_size=NCORES)
+        
+        for res in resmap
+            mass  += res[1]
+            halos += res[2]
+            massball  += res[3]
+            halosball += res[4]
+        end
+
+        i+=NCORES
     end
+    ### -------------------------------
+
+    #resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[:,2], L[:,6], L[:,7], L[:,8], batch_size=NCORES)
+
+    println("Done!")
+    println("Stacking...")
+
+
         
     meandenball   = massball/(4pi/3 * (5RMAX)^3)
     meanhalosball = halosball/(4pi/3 * (5RMAX)^3)
