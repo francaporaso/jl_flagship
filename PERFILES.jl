@@ -131,7 +131,8 @@ function paralellization(NCORES,
     println("NVOIDS: .... $nvoids")
 
     # resmap = @showprogress pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), view(L,:,2), view(L,:,6), view(L,:,7), view(L,:,8), batch_size=NCORES)
-    resmap = @showprogress pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), view(L,:,2), view(L,:,6), view(L,:,7), view(L,:,8))
+    # resmap = @showprogress pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[:,2], L[:,6], L[:,7], L[:,8])
+    resmap = pmap(partial_profile, fill(RMIN,nvoids), fill(RMAX,nvoids), fill(NBINS,nvoids), L[:,2], L[:,6], L[:,7], L[:,8])
 
     return resmap
 end
@@ -183,12 +184,12 @@ function stacking(resmap,
     return 0
 end
 
-stacking(
-        paralellization(
-            NCORES,
-            RMIN, RMAX, NBINS,
-            Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max
-        ), 
-        RMIN, RMAX, NBINS,
-        filename=filename
-)
+# stacking(
+#         paralellization(
+#             NCORES,
+#             RMIN, RMAX, NBINS,
+#             Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max
+#         ), 
+#         RMIN, RMAX, NBINS,
+#         filename=filename
+# )
