@@ -121,9 +121,9 @@ end
 Calcula el stacking.
 """
 function stacking(NCORES,
-                  RMIN, RMAX, NBINS
+                  RMIN, RMAX, NBINS,
                   Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max;
-                  lensname="/mnt/simulations/MICE/voids_MICE.dat"
+                  lensname="/mnt/simulations/MICE/voids_MICE.dat",
                   filename = "pru_stack_par.csv")
 
     L = lenscat_load(Rv_min, Rv_max, z_min, z_max, -1.0, -0.8, rho2_min, rho2_max, lensname=lensname)
