@@ -7,7 +7,7 @@ using ProgressMeter
 NCORES = nprocs()
 
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
-Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 6.0f0, 9.622f0, 0.2f0, 0.4f0, -1.0f0, -0.8f0, -1.0f0, 100.0f0, 2.0f0
+Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 6.0f0, 9.622f0, 0.2f0, 0.4f0, -1.0f0, -0.8f0, -1.0f0, 0.0f0, 2.0f0
 filename = @sprintf "radialprof_stack_R_%.0f_%.0f_z%.1f_%.1f.csv" Rv_min Rv_max z_min z_max
 # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
