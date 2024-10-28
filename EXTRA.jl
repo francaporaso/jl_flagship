@@ -83,3 +83,40 @@ function array_split(ary, step)
 
     return sub_ary
 end 
+
+function radial_profile(RMIN, RMAX, NBINS, 
+    Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max,
+    flag, lensname, tracname,
+    ncores)
+
+
+    ## split lens catalogue
+    Lsplit = array_split(L, ncores)
+    tot_num = length(Lsplit)
+
+    mass   = zeros(NBINS)
+    NHalos = zeros(NBINS)
+    MassBall  = 0.0
+    HalosBall = 0.0
+
+    for (l,L_l) in enumerate(Lsplit)
+        println("Vuelta $l de $tot_num")
+        num = size(L_l)[1]
+        if num==1
+            entrada = @views [RMIN, RMAX, NBINS,
+                    L_l[:,2], L_l[:,6], L_l[:,7], L_l[:,8]]
+
+            resmap = partial_profile(entrada...)
+        else    
+            resmap = pmap(partial_profile, 
+            fill(RMIN,num), fill(RMAX,num), fill(NBINS,num), L_l[:,2], L_l[:,6], L_l[:,7], L_l[:,8])
+        end
+
+        for res in resmap
+            mass      += res[1]
+            NHalos    += res[2]
+            MassBall  += res[3]
+            HalosBall += res[4]
+        end
+    end
+end
