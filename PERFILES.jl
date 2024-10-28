@@ -2,6 +2,7 @@
 using Printf
 using ProgressMeter
 using FITSIO, DelimitedFiles
+using Base.Threads
 
 NCORES = 1
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
@@ -45,7 +46,7 @@ end
 Loads the lenses catalog
 """
 function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max; 
-    flag=2.0f0, lensname="/mnt/simulations/MICE/voids_MICE.dat")
+                      flag=2.0f0, lensname="/mnt/simulations/MICE/voids_MICE.dat")
     ## L[1] = id
     ## L[2] = rv
     ## L[5] = z
@@ -109,24 +110,25 @@ function stacking(NCORES,
     println("Coriendo en paralelo")
     println("NCORES: .... $NCORES")
 
-    ### TODO
-    ### probablemente el bug de memoria desaparece si se implementa el Lsplit...
-
-    ### ----------- intento de solución
-    mass  = zeros(NBINS)
-    halos = zeros(NBINS)
-    massball  = 0.0
-    halosball = 0.0
+    mass  = zeros(NBINS, nthreads())
+    halos = zeros(NBINS, nthreads())
+    massball  = zeros(nthreads())
+    halosball = zeros(nthreads())
 
     # @showprogress for j in 1:nvoids
-    @showprogress for j in 1:nvoids
+    @showprogress @threads for j in 1:nvoids
         res = partial_profile(RMIN, RMAX, NBINS, L[j,2], L[j,6], L[j,7], L[j,8])
 
-        mass  += res[1]
-        halos += res[2]
-        massball  += res[3]
-        halosball += res[4]
+        mass[:,threadid()]  += res[1]
+        halos[:,threadid()] += res[2]
+        massball[:,threadid()]  += res[3]
+        halosball[:,threadid()] += res[4]
     end
+
+    mass  = sum(mass, dims=2)
+    halos = sum(halos, dims=2)
+    massball  = sum(massball)
+    halosball = sum(halosball)
     ### -------------------------------
 
     println("Done!")
