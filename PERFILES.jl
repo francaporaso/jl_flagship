@@ -119,7 +119,7 @@ function stacking(NCORES,
     halosball = 0.0
 
     # @showprogress for j in 1:nvoids
-    @showprogress for j in 1:10
+    @showprogress for j in 1:nvoids
         res = partial_profile(RMIN, RMAX, NBINS, L[j,2], L[j,6], L[j,7], L[j,8])
 
         mass  += res[1]
