@@ -116,7 +116,7 @@ function stacking(NCORES,
     halosball = zeros(nthreads())
 
     # @showprogress for j in 1:nvoids
-    @showprogress @threads for j in 1:nvoids
+    @threads for j in 1:nvoids
         res = partial_profile(RMIN, RMAX, NBINS, L[j,2], L[j,6], L[j,7], L[j,8])
 
         mass[:,threadid()]  += res[1]
