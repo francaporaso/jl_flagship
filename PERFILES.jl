@@ -27,26 +27,11 @@ yhalo = yhalo[mask_particles]
 zhalo = zhalo[mask_particles]
 lmhalo = lmhalo[mask_particles]
 
-function get_halos(RMIN, RMAX, 
-                    rv, xv, yv, zv;
-                    tracname="/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
-
-    distance = @views @. sqrt((xhalo - xv)^2 + (yhalo - yv)^2 + (zhalo - zv)^2) / rv
-    
-    mask_ball = (distance .< 5RMAX) .&& (distance .>= 0.0)
-    mask_prof = (distance .< RMAX) .&& (distance .>= RMIN)
-    
-    massball = sum(10.0f0 .^ lmhalo[mask_ball])
-    halosball = length(distance[mask_ball])
-
-    return lmhalo[mask_prof], distance[mask_prof], massball, halosball
-end
-
 """
 Loads the lenses catalog
 """
 function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max; 
-                      flag=2.0f0, lensname="/mnt/simulations/MICE/voids_MICE.dat")
+    flag=2.0f0, lensname="/mnt/simulations/MICE/voids_MICE.dat")
     ## L[1] = id
     ## L[2] = rv
     ## L[5] = z
@@ -62,6 +47,21 @@ function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min
     (L[:,10] >= rho2_min) && (L[:,10] < rho2_max) && (L[:,12] >= flag) 
     
     return L[mask,:]
+end
+
+function get_halos(RMIN, RMAX, 
+                    rv, xv, yv, zv;
+                    tracname="/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits")
+
+    distance = @views @. sqrt((xhalo - xv)^2 + (yhalo - yv)^2 + (zhalo - zv)^2) / rv
+    
+    mask_ball = (distance .< 5RMAX) .&& (distance .>= 0.0)
+    mask_prof = (distance .< RMAX) .&& (distance .>= RMIN)
+    
+    massball = sum(10.0f0 .^ lmhalo[mask_ball])
+    halosball = length(distance[mask_ball])
+
+    return lmhalo[mask_prof], distance[mask_prof], massball, halosball
 end
 
 """ 
