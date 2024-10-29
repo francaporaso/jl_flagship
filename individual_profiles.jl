@@ -90,5 +90,5 @@ L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho
 for i in 1:N
     res = partial_profile(RMIN,RMAX,NBINS,L[i,2], L[i,6], L[i,7], L[i,8])
     name = @sprintf "void_jl_%d.csv" L[i,1]
-    writedlm(name, [res[1] res[2] fill(res[3]) fill(res[4])], ',')
+    writedlm(name, [res[1] res[2] fill(res[3],NBINS) fill(res[4],NBINS)], ',')
 end
