@@ -1,15 +1,9 @@
-#using Distributed
-using Printf
-using ProgressMeter
 using FITSIO, DelimitedFiles
-using Base.Threads
+using Printf
 
-NCORES = 1
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
 Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10.0f0, 12.0f0, 0.2f0, 0.3f0, -1.0f0, -0.8f0, -1.0f0, 100.0f0, 2.0f0
-filename = @sprintf "radialprof_R_%.0f_%.0f_z%.1f_%.1f_vjl.csv" Rv_min Rv_max z_min z_max
-# lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
-# tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
+
 lensname = "/mnt/simulations/MICE/voids_MICE.dat"
 tracname = "/home/fcaporaso/cats/MICE/mice_halos_centralesF.fits"
 
@@ -27,9 +21,6 @@ yhalo = yhalo[mask_particles]
 zhalo = zhalo[mask_particles]
 lmhalo = lmhalo[mask_particles]
 
-"""
-Loads the lenses catalog
-"""
 function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max; 
     flag=2.0f0, lensname="/mnt/simulations/MICE/voids_MICE.dat")
     ## L[1] = id
@@ -94,78 +85,10 @@ function partial_profile(RMIN, RMAX, NBINS,
     return mass, NHalos, MassBall, HalosBall
 end
 
-"""
-Calcula el stacking.
-"""
-function stacking(NCORES,
-    RMIN, RMAX, NBINS,
-    Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max;
-                  lensname="/mnt/simulations/MICE/voids_MICE.dat",
-                  filename = "pru_stack_par.csv")
-
-    L = lenscat_load(Rv_min, Rv_max, z_min, z_max, -1.0, -0.8, rho2_min, rho2_max, lensname=lensname)
-    nvoids = size(L,1)
-
-    println("NVOIDS: .... $nvoids")
-    println("Coriendo en paralelo")
-    println("NCORES: .... $NCORES")
-
-    mass  = zeros(NBINS, nthreads())
-    halos = zeros(NBINS, nthreads())
-    massball  = zeros(nthreads())
-    halosball = zeros(nthreads())
-
-    # @showprogress for j in 1:nvoids
-    @showprogress @threads for j in 1:nvoids
-        res = partial_profile(RMIN, RMAX, NBINS, L[j,2], L[j,6], L[j,7], L[j,8])
-
-        mass[:,threadid()]  += res[1]
-        halos[:,threadid()] += res[2]
-        massball[threadid()]  += res[3]
-        halosball[threadid()] += res[4]
-    end
-
-    mass  = vec(sum(mass, dims=2))
-    halos = vec(sum(halos, dims=2))
-    massball  = sum(massball)
-    halosball = sum(halosball)
-    ### -------------------------------
-
-    println("Done!")
-    println("Stacking...")
-        
-    meandenball   = massball/(4pi/3 * (5RMAX)^3)
-    meanhalosball = halosball/(4pi/3 * (5RMAX)^3)
-
-    DR = (RMAX-RMIN)/NBINS
-    
-    vol = zeros(NBINS)
-    volcum = zeros(NBINS)
-    for k in 1:NBINS
-        vol[k] = (4*pi/3)*(((k+1.0)*DR + RMIN)^3 - (k*DR + RMIN)^3)    
-        volcum[k] = (4*pi/3)*((k+1.0)*DR + RMIN)^3
-    end
-    
-    Delta    = (mass./vol)/meandenball .- 1
-    DeltaCum = (cumsum(mass)./volcum)/meandenball .- 1
-    DeltaHalos    = (halos./vol)/meanhalosball .- 1
-    DeltaHalosCum = (cumsum(halos)./volcum)/meanhalosball .- 1
-
-    println("Saving in: ", filename)    
-
-    open(filename, "w") do io 
-        writedlm(io, [Delta DeltaCum DeltaHalos DeltaHalosCum], ',')
-    end
-
-    println("DONE!")
-
-    return 0
+N= 10
+L = lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max)
+for i in 1:N
+    res = partial_profile(RMIN,RMAX,NBINS,L[i,2], L[i,6], L[i,7], L[i,8])
+    name = @sprintf "void_jl_%d.csv" L[i,1]
+    writedlm(name, [res[1] res[2] fill(res[3]) fill(res[4])], ',')
 end
-
-stacking(
-        NCORES,
-        RMIN, RMAX, NBINS,
-        Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max,
-        lensname=lensname,
-        filename=filename,
-)
