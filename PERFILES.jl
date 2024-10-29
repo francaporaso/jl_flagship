@@ -125,8 +125,8 @@ function stacking(NCORES,
         halosball[threadid()] += res[4]
     end
 
-    mass  = sum(mass, dims=2)
-    halos = sum(halos, dims=2)
+    mass  = vec(sum(mass, dims=2))
+    halos = vec(sum(halos, dims=2))
     massball  = sum(massball)
     halosball = sum(halosball)
     ### -------------------------------
