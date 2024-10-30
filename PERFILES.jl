@@ -32,7 +32,7 @@ lmhalo = lmhalo[mask_particles]
 Loads the lenses catalog
 """
 function lenscat_load(Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max; 
-    flag=2.0f0, lensname="/mnt/simulations/MICE/voids_MICE.dat")
+                      flag=2.0f0, lensname="/mnt/simulations/MICE/voids_MICE.dat")
     ## L[1] = id
     ## L[2] = rv
     ## L[5] = z
@@ -99,8 +99,8 @@ end
 Calcula el stacking.
 """
 function stacking(NCORES,
-    RMIN, RMAX, NBINS,
-    Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max;
+                  RMIN, RMAX, NBINS,
+                  Rv_min, Rv_max, z_min, z_max, rho2_min, rho2_max;
                   lensname="/mnt/simulations/MICE/voids_MICE.dat",
                   filename = "pru_stack_par.csv")
 
