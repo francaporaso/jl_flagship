@@ -142,9 +142,16 @@ function stacking(NCORES,
     
     vol = zeros(NBINS)
     volcum = zeros(NBINS)
+    # for k in 1:NBINS
+    #     vol[k] = (4*pi/3)*((k*DR + RMIN)^3 - ((k-1)*DR + RMIN)^3)    
+    #     volcum[k] = (4*pi/3)*(k*DR + RMIN)^3
+    # end
+    
+    ### Volumen incorrecto... está asignando el vol del bin k y dsp lo divide con la masa del bin k-1
+    ### sin embargo, así da un perfil decente....
     for k in 1:NBINS
-        vol[k] = (4*pi/3)*((k*DR + RMIN)^3 - ((k-1)*DR + RMIN)^3)    
-        volcum[k] = (4*pi/3)*(k*DR + RMIN)^3
+        vol[k] = (4*pi/3)*(((k+1)*DR + RMIN)^3 - (k*DR + RMIN)^3)    
+        volcum[k] = (4*pi/3)*((k+1)*DR + RMIN)^3
     end
     
     Delta    = (mass./vol)/meandenball .- 1
