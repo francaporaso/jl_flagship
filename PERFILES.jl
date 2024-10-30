@@ -6,8 +6,9 @@ using Base.Threads
 
 NCORES = 1
 RMIN, RMAX, NBINS = 0.0f0, 5.0f0, Int32(50)
-Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10.0f0, 12.0f0, 0.2f0, 0.3f0, -1.0f0, -0.8f0, -1.0f0, 100.0f0, 2.0f0
-filename = @sprintf "radialprof_R_%.0f_%.0f_z%.1f_%.1f_vjl.csv" Rv_min Rv_max z_min z_max
+Rv_min, Rv_max, z_min, z_max, rho1_min, rho1_max, rho2_min, rho2_max, flag = 10.0f0, 10.5f0, 0.2f0, 0.21f0, -1.0f0, -0.8f0, -1.0f0, 100.0f0, 2.0f0
+# filename = @sprintf "radialprof_R_%.0f_%.0f_z%.1f_%.1f_vjl.csv" Rv_min Rv_max z_min z_max
+filename = "test30voids5threads_jl.csv"
 # lensname = "/home/franco/FAMAF/Lensing/cats/MICE/voids_MICE.dat"
 # tracname = "/home/franco/FAMAF/Lensing/cats/MICE/mice_halos_cut.fits"
 lensname = "/mnt/simulations/MICE/voids_MICE.dat"
